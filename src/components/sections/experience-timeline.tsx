@@ -31,7 +31,9 @@ function EntryBody({ item }: { item: Experience }) {
         </p>
       </div>
 
-      <p className="mt-1 font-mono text-label uppercase text-muted">{item.location}</p>
+      <p className="mt-1 font-mono text-label uppercase text-muted">
+        {item.location}
+      </p>
 
       <ul className="mt-5 flex flex-col gap-5">
         {item.bullets.map((bullet) => (

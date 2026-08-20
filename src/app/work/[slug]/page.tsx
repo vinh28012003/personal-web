@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { projects, getProject } from "@/content/projects";
-import { SkipLink } from "@/components/layout/skip-link";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { Slab } from "@/components/ui/slab";
 import { Tag } from "@/components/ui/tag";
 import { Metric } from "@/components/ui/metric";
@@ -38,7 +35,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProjectPage({ params }: PageProps<"/work/[slug]">) {
+export default async function ProjectPage({
+  params,
+}: PageProps<"/work/[slug]">) {
   const { slug } = await params;
   const project = getProject(slug);
   if (!project) notFound();
@@ -46,8 +45,6 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
   return (
     <>
       <JsonLd data={projectJsonLd(project)} />
-      <SkipLink />
-      <SiteHeader />
 
       <main id="main">
         <article>
@@ -63,15 +60,21 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
               </Link>
 
               <h1 className="mt-6 text-h1 uppercase">{project.name}</h1>
-              <p className="mt-4 max-w-[52ch] text-lead text-balance">{project.tagline}</p>
+              <p className="mt-4 max-w-[52ch] text-lead text-balance">
+                {project.tagline}
+              </p>
 
               <dl className="mt-10 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <dt className="font-mono text-label uppercase text-muted">Period</dt>
+                  <dt className="font-mono text-label uppercase text-muted">
+                    Period
+                  </dt>
                   <dd className="mt-1">{project.period}</dd>
                 </div>
                 <div className="lg:col-span-2">
-                  <dt className="font-mono text-label uppercase text-muted">Stack</dt>
+                  <dt className="font-mono text-label uppercase text-muted">
+                    Stack
+                  </dt>
                   <dd className="mt-2">
                     <ul className="flex flex-wrap gap-2">
                       {project.stack.map((tech) => (
@@ -131,7 +134,9 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
               */}
               {project.links && Object.keys(project.links).length > 0 && (
                 <Slab border={4} className="mt-14 p-5 md:p-8">
-                  <h2 className="font-mono text-label uppercase text-muted">Links</h2>
+                  <h2 className="font-mono text-label uppercase text-muted">
+                    Links
+                  </h2>
                   <ul className="mt-4 flex flex-wrap gap-4">
                     {Object.entries(project.links).map(([key, href]) => (
                       <li key={key}>
@@ -153,8 +158,6 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
           </div>
         </article>
       </main>
-
-      <SiteFooter />
     </>
   );
 }

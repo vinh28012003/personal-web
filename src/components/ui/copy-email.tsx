@@ -58,7 +58,9 @@ export function CopyEmail({ email }: { email: string }) {
           {copied ? <CheckIcon /> : <CopyIcon />}
           <span aria-hidden="true">{copied ? "Copied" : "Copy"}</span>
           <span className="sr-only">
-            {copied ? "Email address copied to clipboard" : "Copy email address"}
+            {copied
+              ? "Email address copied to clipboard"
+              : "Copy email address"}
           </span>
         </button>
       )}

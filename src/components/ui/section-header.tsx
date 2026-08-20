@@ -10,7 +10,12 @@ interface SectionHeaderProps {
   className?: string;
 }
 
-export function SectionHeader({ index, title, id, className }: SectionHeaderProps) {
+export function SectionHeader({
+  index,
+  title,
+  id,
+  className,
+}: SectionHeaderProps) {
   return (
     <div className={cn("mb-8 md:mb-12", className)}>
       <Rule weight={4} />
@@ -20,7 +25,10 @@ export function SectionHeader({ index, title, id, className }: SectionHeaderProp
         // hidden behind it when linked to directly.
         className="mt-4 scroll-mt-28 text-h2 uppercase"
       >
-        <span aria-hidden="true" className="mr-4 font-mono text-label align-middle text-muted">
+        <span
+          aria-hidden="true"
+          className="mr-4 font-mono text-label align-middle text-muted"
+        >
           {index}
         </span>
         {title}

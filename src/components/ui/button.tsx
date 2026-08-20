@@ -50,7 +50,16 @@ interface ButtonProps extends ButtonVariants {
   "aria-label"?: string;
 }
 
+/** Opens in a new tab: real http(s) links to another origin. */
 const isExternal = (href: string) => /^(https?:)?\/\//.test(href);
+
+/**
+ * Anything the client router must not handle. mailto:, tel:, sms: and
+ * friends are not routes — passing them to next/link produces a link that
+ * silently fails to do anything.
+ */
+const isNonRouted = (href: string) =>
+  isExternal(href) || /^[a-z][a-z0-9+.-]*:/i.test(href);
 
 /**
  * Renders next/link for internal hrefs, a plain anchor for external ones
@@ -69,7 +78,7 @@ export function Button({
 }: ButtonProps) {
   const classes = cn(button({ variant, size }), className);
 
-  if (href && (isExternal(href) || download)) {
+  if (href && (isNonRouted(href) || download)) {
     return (
       <a
         href={href}
@@ -79,7 +88,9 @@ export function Button({
         {...props}
       >
         {children}
-        {isExternal(href) && <span className="sr-only"> (opens in new tab)</span>}
+        {isExternal(href) && (
+          <span className="sr-only"> (opens in new tab)</span>
+        )}
       </a>
     );
   }

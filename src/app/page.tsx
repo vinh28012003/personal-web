@@ -1,6 +1,3 @@
-import { SkipLink } from "@/components/layout/skip-link";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { Hero } from "@/components/sections/hero";
 import { ProofStrip } from "@/components/sections/proof-strip";
 import { FeaturedProjects } from "@/components/sections/featured-projects";
@@ -14,8 +11,6 @@ export default function Home() {
   return (
     <>
       <JsonLd data={personJsonLd()} />
-      <SkipLink />
-      <SiteHeader />
       <main id="main">
         <Hero />
         <ProofStrip />
@@ -24,7 +19,6 @@ export default function Home() {
         <SkillsMatrix />
         <Contact />
       </main>
-      <SiteFooter />
     </>
   );
 }

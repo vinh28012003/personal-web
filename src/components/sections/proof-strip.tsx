@@ -4,9 +4,21 @@
  * whether to keep going.
  */
 const PROOF = [
-  { figure: "375K+", label: "pipelined ops/sec", plain: "375,000 or more pipelined operations per second." },
-  { figure: "1,000+", label: "concurrent SSE clients", plain: "Over 1,000 concurrent server-sent-event clients." },
-  { figure: "10,219", label: "records verified", plain: "10,219 production job records verified." },
+  {
+    figure: "375K+",
+    label: "pipelined ops/sec",
+    plain: "375,000 or more pipelined operations per second.",
+  },
+  {
+    figure: "1,000+",
+    label: "concurrent SSE clients",
+    plain: "Over 1,000 concurrent server-sent-event clients.",
+  },
+  {
+    figure: "10,219",
+    label: "records verified",
+    plain: "10,219 production job records verified.",
+  },
 ] as const;
 
 export function ProofStrip() {

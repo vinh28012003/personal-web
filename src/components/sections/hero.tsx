@@ -50,7 +50,12 @@ export function Hero() {
           className="intro-fade mt-10 flex flex-wrap items-center gap-4"
           style={{ "--intro-i": 2 } as React.CSSProperties}
         >
-          <Button href={profile.resumePath} download variant="primary" size="lg">
+          <Button
+            href={profile.resumePath}
+            download
+            variant="primary"
+            size="lg"
+          >
             <DownloadIcon />
             Résumé
           </Button>

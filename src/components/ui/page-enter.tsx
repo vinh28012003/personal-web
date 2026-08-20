@@ -17,7 +17,13 @@ import gsap from "gsap";
  * Timing follows the Subtle tier: 200-300ms, power1.inOut, and the entrance
  * is the slower half of the asymmetry (there is no exit to be slower than).
  */
-export function PageEnter({ children }: { children: React.ReactNode }) {
+export function PageEnter({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
@@ -59,7 +65,7 @@ export function PageEnter({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   return (
-    <div ref={ref} data-page-enter="pending">
+    <div ref={ref} data-page-enter="pending" className={className}>
       {children}
     </div>
   );

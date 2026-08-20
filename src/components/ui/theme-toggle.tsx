@@ -27,7 +27,15 @@ export function ThemeToggle() {
           : "Switch colour theme"
       }
     >
-      {mounted ? isDark ? <SunIcon /> : <MoonIcon /> : <span className="block h-[1em] w-[1em]" />}
+      {mounted ? (
+        isDark ? (
+          <SunIcon />
+        ) : (
+          <MoonIcon />
+        )
+      ) : (
+        <span className="block h-[1em] w-[1em]" />
+      )}
     </button>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useClientValue } from "@/lib/use-client-value";
+import { useMediaQuery } from "@/lib/use-client-value";
 import { Button } from "@/components/ui/button";
 import { DownloadIcon, ArrowRightIcon } from "@/components/icons";
 
@@ -21,12 +21,10 @@ interface ResumeViewerProps {
  * matters is available width, and UA strings lie.
  */
 export function ResumeViewer({ src, summary }: ResumeViewerProps) {
-  // False on the server and on the first client paint, so nothing that
-  // depends on viewport width can cause a hydration mismatch.
-  const canEmbed = useClientValue(
-    () => window.matchMedia("(min-width: 768px)").matches,
-    () => false,
-  );
+  // Live: re-evaluates on resize and orientation change. Reading this once
+  // at hydration left a rotated tablet stuck on the mobile card forever.
+  // False on the server and first paint, so hydration cannot mismatch.
+  const canEmbed = useMediaQuery("(min-width: 768px)");
 
   return (
     <div className="flex flex-col gap-6">
@@ -51,7 +49,11 @@ export function ResumeViewer({ src, summary }: ResumeViewerProps) {
           {/* Rendered when the browser has no PDF plug-in at all. */}
           <p className="p-6">
             Your browser cannot display PDFs inline.{" "}
-            <a href={src} download className="text-accent-text underline underline-offset-4">
+            <a
+              href={src}
+              download
+              className="text-accent-text underline underline-offset-4"
+            >
               Download the résumé
             </a>{" "}
             instead.
