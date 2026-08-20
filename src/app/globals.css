@@ -1,0 +1,403 @@
+@import "tailwindcss";
+
+/* Class-based dark mode, driven by next-themes on <html class="dark"> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   LAYER 1 — PRIMITIVES
+   Raw values. Never referenced by a component directly.
+   ========================================================================== */
+:root {
+  --primitive-ink-950: #0a0a0a; /* not #000 — kills OLED halation at 96px+ */
+  --primitive-paper-50: #fafaf7; /* not #fff — same reason */
+  --primitive-paper-0: #ffffff;
+  --primitive-slate-900: #161614;
+  --primitive-concrete-600: #5e5e58;
+  --primitive-concrete-400: #9c9c96;
+  --primitive-blaze-500: #ff3b00; /* THE accent */
+  --primitive-blaze-700: #c42d00; /* accent legal on small text (light only) */
+}
+
+/* ==========================================================================
+   LAYER 2 — SEMANTIC (light = default)
+   Every ratio below is computed, not estimated.
+   ========================================================================== */
+:root {
+  --paper: var(--primitive-paper-50);
+  --surface: var(--primitive-paper-0);
+  --ink: var(--primitive-ink-950); /* 18.93:1 on paper */
+  --muted: var(--primitive-concrete-600); /*  6.24:1 on paper */
+  --accent: var(--primitive-blaze-500); /*  3.42:1 — bg/border/display >=24px ONLY */
+  --accent-text: var(--primitive-blaze-700); /*  5.39:1 — the only accent legal on small text */
+  --accent-fg: var(--primitive-ink-950); /*  5.54:1 on an accent fill */
+  --rule: var(--primitive-ink-950);
+  --focus: var(--primitive-blaze-500); /*  3.42:1 — clears the 3:1 non-text gate */
+
+  /* Ground pair. Components invert against these rather than hardcoding
+     ink/paper, so a component dropped into an inverted block still works. */
+  --ground: var(--primitive-paper-50);
+  --on-ground: var(--primitive-ink-950);
+  /* Muted and accent-text that are legal on the INVERTED ground. */
+  --muted-inverted: var(--primitive-concrete-400); /* 7.17:1 on ink */
+  --accent-text-inverted: var(--primitive-blaze-500); /* 5.54:1 on ink */
+}
+
+.dark {
+  --paper: var(--primitive-ink-950);
+  --surface: var(--primitive-slate-900);
+  --ink: var(--primitive-paper-50); /* 18.93:1 on ink */
+  --muted: var(--primitive-concrete-400); /*  7.17:1 — light value would fail at 3.86:1 */
+  --accent: var(--primitive-blaze-500); /*  5.54:1 — clears 4.5 outright in dark */
+  --accent-text: var(--primitive-blaze-500); /*  collapses onto accent; blaze-700 would fail at 3.51:1 */
+  --accent-fg: var(--primitive-ink-950);
+  --rule: var(--primitive-paper-50);
+  --focus: var(--primitive-blaze-500); /*  5.54:1 */
+
+  --ground: var(--primitive-ink-950);
+  --on-ground: var(--primitive-paper-50);
+  /* In dark mode an inverted block is a LIGHT block, so these flip back. */
+  --muted-inverted: var(--primitive-concrete-600); /* 6.24:1 on paper */
+  --accent-text-inverted: var(--primitive-blaze-700); /* 5.39:1 on paper */
+}
+
+/* ==========================================================================
+   LAYER 3 — COMPONENT
+   Values the semantic layer cannot name.
+   ========================================================================== */
+:root {
+  --slab-border-w: 4px;
+  --slab-border-w-sm: 2px;
+  --focus-ring-w: 3px;
+  --focus-ring-offset: 3px;
+  --header-h: 64px;
+
+  /* z-index scale — v4 has no z namespace, so these live here */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 20;
+  --z-overlay: 40;
+  --z-modal: 100;
+  --z-skip: 1000;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-h: 72px;
+  }
+}
+
+/* ==========================================================================
+   TAILWIND THEME BINDING
+   @theme inline so utilities resolve through the swappable vars above.
+   ========================================================================== */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-accent-fg: var(--accent-fg);
+  --color-rule: var(--rule);
+  --color-focus: var(--focus);
+  --color-ground: var(--ground);
+  --color-on-ground: var(--on-ground);
+
+  --font-display: var(--font-archivo), "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-sans: var(--font-archivo), "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* 4/8 scale — v4 derives the entire padding and gap ramp from this one value */
+  --spacing: 0.25rem;
+
+  /* Type scale. Every clamp() is verified for overflow at 375px. */
+  --text-hero: clamp(3.25rem, 13vw, 11rem);
+  --text-hero--line-height: 0.86;
+  --text-hero--letter-spacing: -0.04em;
+  --text-hero--font-weight: 900;
+
+  --text-h1: clamp(2.5rem, 5.4vw, 4.5rem);
+  --text-h1--line-height: 0.95;
+  --text-h1--letter-spacing: -0.03em;
+  --text-h1--font-weight: 800;
+
+  --text-h2: clamp(2rem, 3.8vw, 3.25rem);
+  --text-h2--line-height: 1;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 800;
+
+  --text-h3: clamp(1.5rem, 2.3vw, 2rem);
+  --text-h3--line-height: 1.1;
+  --text-h3--letter-spacing: -0.015em;
+  --text-h3--font-weight: 700;
+
+  --text-base: 1.0625rem; /* 17px — clears the 16px mobile floor with headroom */
+  --text-base--line-height: 1.6;
+
+  --text-lead: 1.25rem;
+  --text-lead--line-height: 1.45;
+  --text-lead--letter-spacing: -0.005em;
+
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.2;
+  --text-label--letter-spacing: 0.14em;
+  --text-label--font-weight: 700;
+
+  --text-metric: clamp(1.75rem, 3.2vw, 2.75rem);
+  --text-metric--line-height: 1;
+  --text-metric--letter-spacing: -0.01em;
+  --text-metric--font-weight: 700;
+
+  /* Brutalism: sharp corners, everywhere, enforced by the framework.
+     `rounded-lg` now literally emits 0 — an entire class of drift removed. */
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+
+  /* Exactly three elevations. Zero blur, zero alpha, zero spread.
+     Any other shadow value is a bug. */
+  --shadow-slab: 4px 4px 0 0 var(--rule);
+  --shadow-slab-lg: 8px 8px 0 0 var(--rule);
+}
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+@layer base {
+  * {
+    border-color: var(--rule);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Display type is uppercase and width-expanded; body stays normal width. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  /* 0ms state feedback. Brutalism's "instant" IS the strongest possible pass
+     of the "feedback within 100ms" gate — they point the same direction. */
+  a,
+  button,
+  summary,
+  [role="button"] {
+    transition: none;
+  }
+
+  :focus-visible {
+    outline: var(--focus-ring-w) solid var(--focus);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  /* Never remove the ring without replacement — this only suppresses the
+     mouse-click ring, keyboard focus still shows above. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--accent-fg);
+  }
+
+  /* Tabular numerals everywhere a number is rendered in mono. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ==========================================================================
+   SCROLL REVEAL
+   Correctness never depends on animation. Three layers of guard:
+   1. the server renders the final state unconditionally
+   2. html.no-js means JS-off shows everything, with zero flash
+   3. prefers-reduced-motion renders the readable end state immediately
+   ========================================================================== */
+/**
+ * An inverted block: the page's ground and foreground swap places.
+ *
+ * Every role that depends on the ground swaps with it — including `muted`
+ * and `accent-text`, which is where the first version had a real bug: a
+ * secondary button kept `text-ink` and rendered #0A0A0A on #0A0A0A.
+ * Components now resolve against --ground / --on-ground, so anything
+ * dropped into here adapts instead of going invisible.
+ */
+@layer utilities {
+  .inverted {
+    --ground: var(--ink);
+    --on-ground: var(--paper);
+    --rule: var(--paper);
+    --muted: var(--muted-inverted);
+    --accent-text: var(--accent-text-inverted);
+
+    background-color: var(--ink);
+    color: var(--paper);
+  }
+}
+
+@layer utilities {
+  html:not(.no-js) [data-reveal="pending"] {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  [data-reveal="in"] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 200ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not(.no-js) [data-reveal="pending"],
+  [data-reveal],
+  [data-reveal="in"] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+    transition-delay: 0ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  [data-reveal],
+  html:not(.no-js) [data-reveal="pending"] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ==========================================================================
+   3D — hard extrusion only
+   Brutalist depth is a solid block seen at an angle, never a soft shaded
+   surface. Every layer below has zero blur and zero alpha; the illusion
+   comes from stacked offsets and flat rotated planes.
+   ========================================================================== */
+@layer utilities {
+  /**
+   * Extruded display type. Offsets are in `em` so the extrusion scales with
+   * the clamp()'d hero instead of looking pasted-on at small sizes.
+   * The accent is only ever used here at >=24px, where 3.42:1 is legal.
+   */
+  .text-extruded {
+    text-shadow:
+      0.008em 0.008em 0 var(--accent),
+      0.016em 0.016em 0 var(--accent),
+      0.024em 0.024em 0 var(--accent),
+      0.032em 0.032em 0 var(--accent),
+      0.04em 0.04em 0 var(--accent),
+      0.048em 0.048em 0 var(--accent),
+      0.056em 0.056em 0 var(--rule),
+      0.064em 0.064em 0 var(--rule);
+  }
+
+  /* Parent establishes the vanishing point; the child does the rotating. */
+  .scene {
+    perspective: 1400px;
+  }
+
+  .slab-3d {
+    transform-style: preserve-3d;
+    /**
+     * 120ms linear, not 0ms and not eased.
+     *
+     * The 0ms rule governs *state* changes (colour, fill). A spatial
+     * transform has to be traversed to read as spatial at all — snapping it
+     * reads as a glitch rather than as depth. Linear keeps it mechanical
+     * rather than organic, which is the brutalist half of the compromise.
+     */
+    transition: transform 120ms linear;
+    will-change: transform;
+  }
+
+  /*
+   * Hover-only, and hover-capable devices only.
+   * The rule "hover effects don't work on touch devices" is Severity HIGH,
+   * so this is decorative reinforcement of an affordance that already
+   * exists (the border, the shadow, the stretched link) — never the only
+   * signal that something is interactive.
+   */
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .scene:hover .slab-3d,
+    .scene:focus-within .slab-3d {
+      transform: rotateX(2.5deg) rotateY(-4deg) translateZ(22px);
+    }
+
+    /* The hard shadow deepens in step, so the extrusion stays consistent. */
+    .scene:hover .slab-3d.shadow-slab,
+    .scene:focus-within .slab-3d.shadow-slab {
+      box-shadow: 10px 10px 0 0 var(--rule);
+    }
+  }
+
+  /* Layered plane behind a slab — reads as a second face of the same solid. */
+  .slab-face::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateZ(-18px) translate(10px, 10px);
+    border: 4px solid var(--rule);
+    pointer-events: none;
+  }
+}
+
+/* ==========================================================================
+   PAGE ENTER
+   Enter-only. Navigation is never gated on an animation finishing, and no
+   correctness depends on a completion callback.
+   ========================================================================== */
+@layer utilities {
+  html:not(.no-js) [data-page-enter="pending"] {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slab-3d {
+    transition: none !important;
+    transform: none !important;
+  }
+
+  [data-page-enter] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
