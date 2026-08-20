@@ -1,8 +1,7 @@
 import { profile } from "@/content/profile";
 import { experience } from "@/content/experience";
 import type { Project } from "@/content/types";
-
-const BASE = "https://vinh-tran.vercel.app";
+import { SITE_URL as BASE } from "@/lib/site";
 
 /** Person schema for the home page. */
 export function personJsonLd() {
