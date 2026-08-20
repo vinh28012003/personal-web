@@ -10,8 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:all": "pnpm lint && tsc --noEmit && pnpm test && pnpm test:e2e",
-    "typecheck": "tsc --noEmit",
+    "test:all": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:e2e",
+    "typecheck": "next typegen && tsc --noEmit",
     "audit": "node scripts/design-audit.mjs"
   },
   "dependencies": {

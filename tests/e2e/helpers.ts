@@ -3,18 +3,20 @@ import type { Page } from "@playwright/test";
 export const PAGES = ["/", "/work/redis-lite", "/work/cforge"] as const;
 
 /**
- * Force every reveal wrapper to its final state.
+ * Force every reveal to its final state.
  *
- * Scroll-triggered reveals are correct for a human but invisible to a
- * non-scrolling capture, so invariant checks must assert against the
- * finished page, not the pre-scroll one.
+ * Scroll-driven reveals are correct for a human but leave off-screen
+ * elements at 0% progress, so invariant checks must assert against the
+ * finished page rather than the pre-scroll one. `data-motion="off"` is the
+ * production escape hatch that also covers print and non-scrolling capture.
  */
 export async function settle(page: Page) {
-  await page.evaluate(() =>
+  await page.evaluate(() => {
+    document.documentElement.setAttribute("data-motion", "off");
     document
       .querySelectorAll("[data-reveal]")
-      .forEach((el) => el.setAttribute("data-reveal", "in")),
-  );
+      .forEach((el) => el.setAttribute("data-reveal", "in"));
+  });
   await page.waitForTimeout(150);
 }
 

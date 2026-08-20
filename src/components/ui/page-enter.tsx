@@ -37,12 +37,24 @@ export function PageEnter({ children }: { children: React.ReactNode }) {
     const tween = gsap.fromTo(
       el,
       { opacity: 0, y: 10 },
-      { opacity: 1, y: 0, duration: 0.24, ease: "power1.inOut", overwrite: "auto" },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.24,
+        ease: "power1.inOut",
+        overwrite: "auto",
+        // Strip the inline transform when finished. GSAP otherwise leaves
+        // `transform: translate(0px, 0px)` behind, and a non-none transform
+        // creates a containing block — which silently changes how any
+        // position: sticky / fixed descendant resolves.
+        clearProps: "transform,willChange",
+      },
     );
 
     return () => {
       tween.kill();
-      gsap.set(el, { opacity: 1, y: 0 });
+      gsap.set(el, { opacity: 1 });
+      gsap.set(el, { clearProps: "transform,willChange" });
     };
   }, [pathname]);
 

@@ -256,19 +256,110 @@
   }
 }
 
+/**
+ * Two reveal strategies, chosen by capability.
+ *
+ * Where CSS scroll-driven animations exist, the reveal is tied directly to
+ * scroll position and runs off the main thread — no observer, no JS on the
+ * scroll path, and the motion tracks the scrollbar exactly. Everywhere else
+ * the IntersectionObserver path below does the same job in one step.
+ */
 @layer utilities {
-  html:not(.no-js) [data-reveal="pending"] {
-    opacity: 0;
-    transform: translateY(16px);
+  @supports not (animation-timeline: view()) {
+    html:not(.no-js) [data-reveal="pending"] {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    [data-reveal="in"] {
+      opacity: 1;
+      transform: none;
+      transition:
+        opacity 200ms cubic-bezier(0.16, 1, 0.3, 1),
+        transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      transition-delay: var(--reveal-delay, 0ms);
+    }
   }
 
-  [data-reveal="in"] {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      html:not(.no-js) [data-reveal] {
+        animation: reveal-3d linear both;
+        animation-timeline: view();
+        /* Finishes well before the element centres, so nothing a reader is
+           actually looking at is still mid-animation. */
+        animation-range: entry 4% cover 32%;
+      }
+    }
+  }
+
+  /* Escape hatch: forces every scroll-driven element to its end state.
+     Used by the test harness and anything that captures without scrolling. */
+  html[data-motion="off"] [data-reveal],
+  html[data-motion="off"] [data-page-enter] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+@keyframes reveal-3d {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) rotateX(-10deg) translate3d(0, 26px, -40px);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1200px) rotateX(0) translate3d(0, 0, 0);
+  }
+}
+
+/* ==========================================================================
+   FIRST-VISIT 3D INTRO
+   Runs once per session. The hero assembles out of depth rather than
+   fading — the same hard-edged 3D language as the extrusion.
+   ========================================================================== */
+@keyframes intro-slab {
+  from {
+    opacity: 0;
+    transform: perspective(900px) rotateX(-72deg) translate3d(0, 40%, -160px);
+    transform-origin: 50% 0%;
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: perspective(900px) rotateX(0) translate3d(0, 0, 0);
+    transform-origin: 50% 0%;
+  }
+}
+
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
     opacity: 1;
     transform: none;
-    transition:
-      opacity 200ms cubic-bezier(0.16, 1, 0.3, 1),
-      transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
-    transition-delay: var(--reveal-delay, 0ms);
+  }
+}
+
+@layer utilities {
+  /*
+   * Only ever active when JS has explicitly opted in (`data-intro="run"`),
+   * so no-JS and repeat visits render the finished hero with no animation
+   * and, critically, no hidden state to get stuck in.
+   */
+  html[data-intro="run"] .intro-line {
+    animation: intro-slab 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--intro-i, 0) * 90ms);
+  }
+
+  html[data-intro="run"] .intro-fade {
+    animation: intro-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(320ms + var(--intro-i, 0) * 70ms);
   }
 }
 

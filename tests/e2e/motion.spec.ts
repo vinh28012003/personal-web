@@ -89,3 +89,82 @@ test("hover 3D is not the only affordance on a card", async ({ page }) => {
   expect(s.shadow).not.toBe("none");
   await expect(card.getByRole("link")).toHaveCount(1);
 });
+
+/* ── first-visit 3D intro ─────────────────────────────────────────────── */
+
+test("the 3D intro plays on a fresh session and only once", async ({ page }) => {
+  await page.goto("/");
+  // The hook is set synchronously on mount, before the 1.6s cleanup.
+  await expect(page.locator('html[data-intro="run"]')).toHaveCount(1);
+
+  // Second visit in the same session must not replay it.
+  await page.goto("/resume");
+  await page.goto("/");
+  await page.waitForTimeout(200);
+  await expect(page.locator('html[data-intro="run"]')).toHaveCount(0);
+});
+
+test("intro elements are never hidden by default — animation is opt-in", async ({ page }) => {
+  await page.goto("/");
+  // Clear the session flag and reload so no intro runs at all.
+  await page.evaluate(() => sessionStorage.clear());
+  await page.addInitScript(() => sessionStorage.setItem("intro-played", "1"));
+  await page.reload();
+  await page.waitForTimeout(150);
+
+  await expect(page.locator('html[data-intro="run"]')).toHaveCount(0);
+  const opacity = await page
+    .locator(".intro-line")
+    .first()
+    .evaluate((el) => getComputedStyle(el).opacity);
+  expect(opacity).toBe("1");
+});
+
+test.describe("JavaScript disabled", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("hero is fully visible with no intro when JS never runs", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("html[data-intro]")).toHaveCount(0);
+    for (const sel of [".intro-line", ".intro-fade"]) {
+      const o = await page.locator(sel).first().evaluate((el) => getComputedStyle(el).opacity);
+      expect(o, sel).toBe("1");
+    }
+  });
+});
+
+/* ── scroll-driven reveal ─────────────────────────────────────────────── */
+
+test("scroll-driven reveal settles at full opacity once scrolled past", async ({ page }) => {
+  await page.goto("/");
+  // Walk the page the way a reader does.
+  for (let y = 0; y <= 4000; y += 500) {
+    await page.evaluate((v) => window.scrollTo(0, v), y);
+    await page.waitForTimeout(90);
+  }
+  await page.waitForTimeout(300);
+
+  const stranded = await page.evaluate(() =>
+    [...document.querySelectorAll("[data-reveal]")]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        // Only judge elements scrolled ENTIRELY past. An element part-way
+        // into the viewport is meant to be mid-animation — that is the
+        // whole point of tying the reveal to scroll position.
+        return r.bottom < 0 && parseFloat(getComputedStyle(el).opacity) < 0.99;
+      })
+      .map((el) => (el.textContent || "").trim().slice(0, 30)),
+  );
+  expect(stranded, stranded.join("\n")).toEqual([]);
+});
+
+test("the motion escape hatch forces every reveal to its end state", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => document.documentElement.setAttribute("data-motion", "off"));
+  await page.waitForTimeout(120);
+  const opacities = await page.evaluate(() =>
+    [...document.querySelectorAll("[data-reveal]")].map((el) => getComputedStyle(el).opacity),
+  );
+  expect(opacities.length).toBeGreaterThan(0);
+  expect(opacities.every((o) => o === "1")).toBe(true);
+});
