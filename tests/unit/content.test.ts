@@ -63,3 +63,37 @@ describe("Experience data", () => {
     }
   });
 });
+
+describe("Site URL resolution", () => {
+  it("should_never_hardcode_a_domain_in_metadata_sources", async () => {
+    // Regression: the origin was hardcoded in four files, so a wrong domain
+    // silently propagated into metadataBase, OG tags, sitemap, robots and
+    // JSON-LD at once.
+    const fs = await import("node:fs/promises");
+    const files = [
+      "src/app/layout.tsx",
+      "src/app/sitemap.ts",
+      "src/app/robots.ts",
+      "src/lib/jsonld.ts",
+    ];
+    for (const f of files) {
+      const src = await fs.readFile(f, "utf8");
+      expect(src, `${f} must not hardcode an origin`).not.toMatch(
+        /https:\/\/[a-z0-9-]+\.vercel\.app/,
+      );
+    }
+  });
+
+  it("should_fall_back_to_localhost_when_no_deploy_env_is_present", async () => {
+    const { SITE_URL } = await import("@/lib/site");
+    // Tests run without VERCEL_PROJECT_PRODUCTION_URL set.
+    expect(SITE_URL).toBe("http://localhost:3000");
+  });
+
+  it("should_build_absolute_urls_from_the_shared_origin", () => {
+    // Record<string, unknown>: the schema mixes strings, arrays and nested
+    // objects, so a string-valued cast does not overlap and TS rejects it.
+    const d = personJsonLd() as Record<string, unknown>;
+    expect(d.url).toBe("http://localhost:3000");
+  });
+});

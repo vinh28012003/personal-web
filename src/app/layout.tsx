@@ -6,6 +6,8 @@ import { PageEnter } from "@/components/ui/page-enter";
 import { SkipLink } from "@/components/layout/skip-link";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { Analytics } from "@vercel/analytics/next";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 /**
@@ -29,8 +31,6 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin", "latin-ext", "vietnamese"],
   display: "swap",
 });
-
-const SITE_URL = "https://vinh-tran.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -104,6 +104,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SiteHeader />
           <PageEnter className="flex-1">{children}</PageEnter>
           <SiteFooter />
+          {/* No cookies, so no consent banner required. */}
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
