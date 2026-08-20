@@ -50,7 +50,9 @@ export function Metric({ metric, size = "lg", className }: MetricProps) {
       >
         {isDelta ? (
           <span className="inline-flex items-center whitespace-nowrap">
-            <s className="text-muted no-underline line-through decoration-2">{metric.from}</s>
+            <s className="text-muted no-underline line-through decoration-2">
+              {metric.from}
+            </s>
             <Arrow />
             <span>{metric.to}</span>
           </span>
@@ -58,7 +60,9 @@ export function Metric({ metric, size = "lg", className }: MetricProps) {
           <>
             {metric.value}
             {metric.suffix && (
-              <span className="text-[0.55em] font-normal align-baseline">{metric.suffix}</span>
+              <span className="text-[0.55em] font-normal align-baseline">
+                {metric.suffix}
+              </span>
             )}
           </>
         )}

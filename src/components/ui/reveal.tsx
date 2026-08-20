@@ -70,7 +70,11 @@ export function Reveal({
     <Tag
       ref={ref}
       data-reveal="pending"
-      style={{ "--reveal-delay": `${Math.min(delayIndex, 6) * 40}ms` } as React.CSSProperties}
+      style={
+        {
+          "--reveal-delay": `${Math.min(delayIndex, 6) * 40}ms`,
+        } as React.CSSProperties
+      }
       className={className}
     >
       {children}

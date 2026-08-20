@@ -18,7 +18,9 @@ export function SkillsMatrix() {
               key={group.label}
               className="grid grid-cols-1 gap-3 border-t-2 border-rule py-6 md:grid-cols-[14rem_1fr] md:gap-8"
             >
-              <dt className="font-mono text-label uppercase text-muted">{group.label}</dt>
+              <dt className="font-mono text-label uppercase text-muted">
+                {group.label}
+              </dt>
               <dd>
                 <ul className="flex flex-wrap gap-2">
                   {group.items.map((item) => (

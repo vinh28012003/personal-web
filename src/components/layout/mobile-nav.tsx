@@ -27,9 +27,12 @@ export function MobileNav({ items, resumeHref }: MobileNavProps) {
   useEffect(() => {
     const root = document.documentElement;
     if (open) {
+      // Restore whatever was there before rather than clearing it, so we
+      // never stomp an inline overflow set by something else.
+      const previous = root.style.overflow;
       root.style.overflow = "hidden";
       return () => {
-        root.style.overflow = "";
+        root.style.overflow = previous;
       };
     }
   }, [open]);
