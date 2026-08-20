@@ -1,6 +1,5 @@
 import { profile } from "@/content/profile";
 import { Button } from "@/components/ui/button";
-import { HeroIntro } from "@/components/ui/hero-intro";
 import { DownloadIcon, ArrowRightIcon } from "@/components/icons";
 
 /**
@@ -10,14 +9,13 @@ import { DownloadIcon, ArrowRightIcon } from "@/components/icons";
  * The name is hard-broken into explicit lines rather than left to wrap —
  * at wdth 125 / weight 900 the full string overflows a 375px viewport.
  *
- * `intro-line` / `intro-fade` are inert until the HeroIntro client component
- * sets html[data-intro="run"], so the default render is the finished state.
+ * `intro-line` / `intro-fade` are inert until the inline boot script sets
+ * html[data-intro="run"] before first paint, so the default render — no JS,
+ * reduced motion, or a repeat visit — is the finished state.
  */
 export function Hero() {
   return (
     <section className="border-b-4 border-rule px-5 pt-12 pb-14 md:px-8 md:pt-20 md:pb-24">
-      <HeroIntro />
-
       <div className="mx-auto max-w-7xl">
         <p
           className="intro-fade font-mono text-label uppercase text-muted"

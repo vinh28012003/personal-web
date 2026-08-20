@@ -168,3 +168,47 @@ test("the motion escape hatch forces every reveal to its end state", async ({ pa
   expect(opacities.length).toBeGreaterThan(0);
   expect(opacities.every((o) => o === "1")).toBe(true);
 });
+
+/**
+ * Regression: the intro used to be armed from a useEffect. Two failures came
+ * out of that — the effect ran ~400ms after navigation, so the hero painted
+ * finished and then jumped back to animate; and React StrictMode's
+ * double-invoke burned the sessionStorage flag on the first mount while the
+ * cleanup stripped the attribute, so on localhost it never played at all.
+ *
+ * It is now armed by a synchronous inline script in <head>, which is why
+ * this asserts at DOMContentLoaded — before any React effect could run.
+ */
+test("intro is armed by the inline script, not after hydration", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+
+  const armed = await page.evaluate(
+    () => document.documentElement.getAttribute("data-intro"),
+  );
+  expect(armed, "data-intro must be set before React hydrates").toBe("run");
+
+  const anim = await page
+    .locator(".intro-line")
+    .first()
+    .evaluate((el) => getComputedStyle(el).animationName);
+  expect(anim).toBe("intro-slab");
+});
+
+test("intro does not replay on reload or on returning to the page", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(1800);
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator("html[data-intro]")).toHaveCount(0);
+
+  await page.goto("/resume", { waitUntil: "domcontentloaded" });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("html[data-intro]")).toHaveCount(0);
+
+  // And the hero is fully visible in both cases.
+  const o = await page
+    .locator(".intro-line")
+    .first()
+    .evaluate((el) => getComputedStyle(el).opacity);
+  expect(o).toBe("1");
+});
