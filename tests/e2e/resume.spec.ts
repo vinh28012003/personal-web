@@ -55,3 +55,31 @@ test.describe("JavaScript disabled", () => {
     await expect(page.getByRole("link", { name: /download pdf/i })).toBeVisible();
   });
 });
+
+/**
+ * The hero's primary action previews rather than downloading. Handing a
+ * recruiter a file they then have to open is worse than letting them read
+ * it in place and decide.
+ */
+test("the hero résumé button opens the preview page, not a download", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  const btn = page.locator("main").getByRole("link", { name: /view résumé/i });
+  await expect(btn).toBeVisible();
+  await expect(btn, "must navigate, not download").not.toHaveAttribute("download", /.*/);
+  await expect(btn).toHaveAttribute("href", "/resume");
+
+  await btn.click();
+  await expect(page).toHaveURL(/\/resume$/);
+  // And the download is waiting there.
+  await expect(page.getByRole("link", { name: /download pdf/i })).toBeVisible();
+});
+
+test("a direct download is still one click away from the header", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const headerBtn = page.locator('header a[href$=".pdf"]:not(dialog a)');
+  await expect(headerBtn).toBeVisible();
+  await expect(headerBtn).toHaveAttribute("download", "");
+});
