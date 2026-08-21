@@ -14,6 +14,13 @@ export const profile: Profile = {
   // ~437px and would overflow a 375px viewport if left to wrap naturally.
   heroLines: ["VINH", "TRAN"],
 
-  intro:
-    "I build the parts of a system that have to stay up — event loops, replication, caching layers, and the pipelines that move data between services. Most of my work is measured in the difference between the number before and the number after.",
+  /**
+   * A hero subhead, not a résumé summary — two different genres. The
+   * headline, the kicker above it and the band below already state role,
+   * school and availability, so anything restating those reads as
+   * repetition. This says the one thing they cannot.
+   *
+   * The professional summary proper lives on /resume, where it belongs.
+   */
+  intro: "I love building systems that stay up under load.",
 };
