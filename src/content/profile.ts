@@ -15,12 +15,19 @@ export const profile: Profile = {
   heroLines: ["VINH", "TRAN"],
 
   /**
-   * A hero subhead, not a résumé summary — two different genres. The
-   * headline, the kicker above it and the band below already state role,
-   * school and availability, so anything restating those reads as
-   * repetition. This says the one thing they cannot.
+   * Reads as a progression: what he builds, the constraint he holds it to,
+   * then the tradeoff.
    *
-   * The professional summary proper lives on /resume, where it belongs.
+   * "Fast by default, durable on request" is not a slogan — it is what the
+   * WAIT sync barrier in Redis Lite actually does. Asynchronous replication
+   * keeps the system available during a partition; WAIT is the opt-in path
+   * for a caller that needs the stronger guarantee. Stating the choice is a
+   * better signal than naming the theorem behind it.
    */
-  intro: "I love building systems that stay up under load.",
+  strapline: [
+    "Idea to product",
+    "Simple but scalable",
+    "Fast by default",
+    "Durable on request",
+  ],
 };

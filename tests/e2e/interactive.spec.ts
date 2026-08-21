@@ -239,3 +239,65 @@ test("project figures still appear inside the Projects section", async ({ page }
   const text = await section.innerText();
   expect(text).toContain("375K");
 });
+
+/* ── hero strapline ───────────────────────────────────────────────────── */
+
+test("the strapline reads as four separate items to a screen reader", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  const items = page.locator("ul.intro-fade li");
+  await expect(items).toHaveCount(4);
+
+  // innerText includes aria-hidden content, which a screen reader skips.
+  // Read what assistive tech would actually get: the non-hidden spans.
+  const texts = await page.evaluate(() =>
+    [...document.querySelectorAll("ul.intro-fade li")].map((li) =>
+      [...li.querySelectorAll("span")]
+        .filter((s) => s.getAttribute("aria-hidden") !== "true")
+        .map((s) => s.textContent!.trim())
+        .join(" "),
+    ),
+  );
+  // Source casing, not the CSS uppercase — which is the point: assistive
+  // tech announces "Idea to product", not four spelled-out capitals.
+  expect(texts).toEqual([
+    "Idea to product",
+    "Simple but scalable",
+    "Fast by default",
+    "Durable on request",
+  ]);
+  // Every separator must be hidden from assistive tech.
+  const seps = page.locator("ul.intro-fade li span[aria-hidden='true']");
+  expect(await seps.count()).toBe(3);
+});
+
+test("strapline items align when the list stacks on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const lefts = await page.evaluate(() =>
+    [...document.querySelectorAll("ul.intro-fade li")].map((li) =>
+      Math.round(li.getBoundingClientRect().left),
+    ),
+  );
+  // Separators are hidden when stacked; otherwise every phrase but the
+  // first would be indented by a bullet.
+  expect(new Set(lefts).size, `left edges: ${lefts.join(", ")}`).toBe(1);
+});
+
+test("the strapline does not visually compete with the kicker", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const [kicker, strap] = await page.evaluate(() => {
+    const k = getComputedStyle(document.querySelector("section p.intro-fade")!);
+    const s = getComputedStyle(document.querySelector("ul.intro-fade li span:last-child")!);
+    return [
+      { family: k.fontFamily, size: parseFloat(k.fontSize) },
+      { family: s.fontFamily, size: parseFloat(s.fontSize) },
+    ];
+  });
+  // Kicker is mono and small; the strapline is the display face and larger.
+  expect(kicker.family).toMatch(/mono/i);
+  expect(strap.family).not.toMatch(/mono/i);
+  expect(strap.size).toBeGreaterThan(kicker.size);
+});
