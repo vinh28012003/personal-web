@@ -85,7 +85,11 @@ export interface Profile {
   github: string;
   linkedin: string;
   resumePath: string;
-  /** The hero statement. Hard-broken into lines — never left to wrap. */
+  /** The hero statement. Hard-broken into lines, never left to wrap. */
   heroLines: readonly string[];
-  intro: string;
+  /**
+   * Four phrases under the name, read left to right as a progression:
+   * what he does, how he does it, then the tradeoff he actually made.
+   */
+  strapline: readonly string[];
 }
