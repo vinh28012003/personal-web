@@ -34,7 +34,10 @@ const FACTS = [
 
 export function IntroStrip() {
   return (
-    <section aria-label="At a glance" className="inverted border-b-4 border-rule">
+    <section
+      aria-label="At a glance"
+      className="inverted border-b-4 border-rule"
+    >
       <dl className="mx-auto grid max-w-7xl grid-cols-1 divide-y-2 divide-rule sm:grid-cols-3 sm:divide-x-2 sm:divide-y-0">
         {FACTS.map((fact) => (
           <div key={fact.label} className="px-5 py-6 md:px-8 md:py-8">
@@ -42,7 +45,9 @@ export function IntroStrip() {
               {fact.value}
             </dt>
             <dd className="mt-2 text-h3 uppercase">{fact.label}</dd>
-            <dd className="mt-2 max-w-[34ch] text-sm text-muted">{fact.detail}</dd>
+            <dd className="mt-2 max-w-[34ch] text-sm text-muted">
+              {fact.detail}
+            </dd>
           </div>
         ))}
       </dl>

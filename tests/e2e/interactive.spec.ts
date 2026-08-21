@@ -21,7 +21,9 @@ test.describe("mobile nav", () => {
     expect(state.overflow, "background scroll must be locked").toBe("hidden");
   });
 
-  test("Escape closes it and returns focus to the trigger", async ({ page }) => {
+  test("Escape closes it and returns focus to the trigger", async ({
+    page,
+  }) => {
     await page.goto("/");
     await page.getByRole("button", { name: /open navigation menu/i }).click();
     await expect(page.locator("dialog")).toHaveAttribute("open", "");
@@ -45,19 +47,27 @@ test.describe("mobile nav", () => {
     const label = await page.evaluate(
       () => document.activeElement?.getAttribute("aria-label") ?? "",
     );
-    expect(label, "focus must return to the trigger").toMatch(/open navigation/i);
+    expect(label, "focus must return to the trigger").toMatch(
+      /open navigation/i,
+    );
   });
 
   test("a nav link closes the dialog and navigates", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: /open navigation menu/i }).click();
-    await page.locator("dialog").getByRole("link", { name: /^résumé$/i }).first().click();
+    await page
+      .locator("dialog")
+      .getByRole("link", { name: /^resume$/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/resume$/);
     await expect(page.locator("dialog")).toHaveCount(1);
     await expect(page.locator("dialog")).not.toHaveAttribute("open", "");
   });
 
-  test("dialog links are not reachable by keyboard while closed", async ({ page }) => {
+  test("dialog links are not reachable by keyboard while closed", async ({
+    page,
+  }) => {
     await page.goto("/");
     // A closed <dialog> is display:none, so nothing inside it may take focus.
     const reachable = await page.evaluate(() => {
@@ -79,7 +89,9 @@ test.describe("theme toggle", () => {
 
     await page.getByRole("button", { name: /switch to dark theme/i }).click();
     await expect(page.locator("html.dark")).toHaveCount(1);
-    expect(await page.evaluate(() => localStorage.getItem("theme"))).toBe("dark");
+    expect(await page.evaluate(() => localStorage.getItem("theme"))).toBe(
+      "dark",
+    );
 
     await page.reload();
     await expect(page.locator("html.dark")).toHaveCount(1);
@@ -99,9 +111,13 @@ test.describe("theme toggle", () => {
     await expect(page.locator("html.dark")).toHaveCount(0);
   });
 
-  test("has an accessible name before and after hydration", async ({ page }) => {
+  test("has an accessible name before and after hydration", async ({
+    page,
+  }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    const btn = page.getByRole("button", { name: /switch to .*theme|switch colour theme/i });
+    const btn = page.getByRole("button", {
+      name: /switch to .*theme|switch colour theme/i,
+    });
     await expect(btn).toBeVisible();
   });
 });
@@ -125,21 +141,31 @@ test.describe("copy email", () => {
     await expect(live).toHaveText(/copied/i);
   });
 
-  test("the mailto link is always present, independent of clipboard support", async ({ page }) => {
+  test("the mailto link is always present, independent of clipboard support", async ({
+    page,
+  }) => {
     await page.goto("/");
     const mailto = page.locator('a[href^="mailto:"]');
     await expect(mailto).toBeVisible();
-    await expect(mailto).toHaveAttribute("href", /tranquangvinh2801@gmail\.com/);
+    await expect(mailto).toHaveAttribute(
+      "href",
+      /tranquangvinh2801@gmail\.com/,
+    );
   });
 });
 
 /* ── regressions from the code review ─────────────────────────────────── */
 
-test("sticky header is never displaced during a route transition", async ({ page }) => {
+test("sticky header is never displaced during a route transition", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
-  await page.getByRole("link", { name: /^résumé$/i }).first().click();
+  await page
+    .getByRole("link", { name: /^resume$/i })
+    .first()
+    .click();
 
   // Sample across the whole tween window.
   const tops: number[] = [];
@@ -147,15 +173,22 @@ test("sticky header is never displaced during a route transition", async ({ page
     await page.waitForTimeout(35);
     tops.push(
       await page.evaluate(() =>
-        Math.round(document.querySelector("header")!.getBoundingClientRect().top),
+        Math.round(
+          document.querySelector("header")!.getBoundingClientRect().top,
+        ),
       ),
     );
   }
   // The header lives outside PageEnter, so no transform can drag it.
-  expect(tops.every((t) => t === 0), `header tops during tween: ${tops.join(",")}`).toBe(true);
+  expect(
+    tops.every((t) => t === 0),
+    `header tops during tween: ${tops.join(",")}`,
+  ).toBe(true);
 });
 
-test("resume viewer adapts when the viewport crosses the breakpoint", async ({ page }) => {
+test("resume viewer adapts when the viewport crosses the breakpoint", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/resume");
   await expect(page.locator('object[type="application/pdf"]')).toHaveCount(0);
@@ -180,7 +213,9 @@ test("every page has a skip link, including 404", async ({ page }) => {
 
 /* ── section naming & the intro band ──────────────────────────────────── */
 
-test("nav, headings and anchors all say Projects and Experiences", async ({ page }) => {
+test("nav, headings and anchors all say Projects and Experiences", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
@@ -195,7 +230,9 @@ test("nav, headings and anchors all say Projects and Experiences", async ({ page
   await expect(page.locator("#work, #experience")).toHaveCount(0);
 });
 
-test("every in-page anchor link resolves to a real target", async ({ page }) => {
+test("every in-page anchor link resolves to a real target", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   const hrefs = await page.evaluate(() =>
@@ -207,7 +244,9 @@ test("every in-page anchor link resolves to a real target", async ({ page }) => 
   for (const href of hrefs) {
     const id = href.split("#")[1];
     if (!id) continue;
-    await expect(page.locator(`#${id}`), `broken anchor: ${href}`).toHaveCount(1);
+    await expect(page.locator(`#${id}`), `broken anchor: ${href}`).toHaveCount(
+      1,
+    );
   }
 });
 
@@ -217,7 +256,9 @@ test("every in-page anchor link resolves to a real target", async ({ page }) => 
  * yet seen the projects. Those figures belong to the project cards, which
  * name the system they came from.
  */
-test("the intro band introduces the person, not project metrics", async ({ page }) => {
+test("the intro band introduces the person, not project metrics", async ({
+  page,
+}) => {
   await page.goto("/");
   const band = page.locator('section[aria-label="At a glance"]');
   await expect(band).toBeVisible();
@@ -228,21 +269,29 @@ test("the intro band introduces the person, not project metrics", async ({ page 
 
   // Project figures must not appear above the Projects section.
   for (const figure of ["375K", "10,219", "SSE"]) {
-    expect(text, `"${figure}" belongs in the Projects section`).not.toContain(figure);
+    expect(text, `"${figure}" belongs in the Projects section`).not.toContain(
+      figure,
+    );
   }
 });
 
-test("project figures still appear inside the Projects section", async ({ page }) => {
+test("project figures still appear inside the Projects section", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
-  const section = page.locator("section").filter({ has: page.locator("#projects") });
+  const section = page
+    .locator("section")
+    .filter({ has: page.locator("#projects") });
   const text = await section.innerText();
   expect(text).toContain("375K");
 });
 
 /* ── hero strapline ───────────────────────────────────────────────────── */
 
-test("the strapline reads as four separate items to a screen reader", async ({ page }) => {
+test("the strapline reads as four separate items to a screen reader", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
@@ -272,7 +321,9 @@ test("the strapline reads as four separate items to a screen reader", async ({ p
   expect(await seps.count()).toBe(3);
 });
 
-test("strapline items align when the list stacks on mobile", async ({ page }) => {
+test("strapline items align when the list stacks on mobile", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   const lefts = await page.evaluate(() =>
@@ -285,12 +336,16 @@ test("strapline items align when the list stacks on mobile", async ({ page }) =>
   expect(new Set(lefts).size, `left edges: ${lefts.join(", ")}`).toBe(1);
 });
 
-test("the strapline does not visually compete with the kicker", async ({ page }) => {
+test("the strapline does not visually compete with the kicker", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   const [kicker, strap] = await page.evaluate(() => {
     const k = getComputedStyle(document.querySelector("section p.intro-fade")!);
-    const s = getComputedStyle(document.querySelector("ul.intro-fade li span:last-child")!);
+    const s = getComputedStyle(
+      document.querySelector("ul.intro-fade li span:last-child")!,
+    );
     return [
       { family: k.fontFamily, size: parseFloat(k.fontSize) },
       { family: s.fontFamily, size: parseFloat(s.fontSize) },

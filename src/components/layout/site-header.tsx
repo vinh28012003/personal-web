@@ -8,12 +8,12 @@ import { DownloadIcon } from "@/components/icons";
 const NAV = [
   { href: "/#projects", label: "Projects" },
   { href: "/#experiences", label: "Experiences" },
-  { href: "/resume", label: "Résumé" },
+  { href: "/resume", label: "Resume" },
   { href: "/#contact", label: "Contact" },
 ] as const;
 
 /**
- * Server Component. The résumé button is the single accent-filled element
+ * Server Component. The resume button is the single accent-filled element
  * on screen — the one primary CTA — and it is reachable at every viewport
  * without scrolling, which is the first thing a recruiter looks for.
  */
@@ -60,7 +60,7 @@ export function SiteHeader() {
             className="px-3 md:px-5"
           >
             <DownloadIcon />
-            Résumé
+            Resume
           </Button>
 
           <MobileNav items={NAV} resumeHref={profile.resumePath} />

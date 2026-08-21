@@ -43,7 +43,7 @@ export function ResumeViewer({ src, summary }: ResumeViewerProps) {
         <object
           data={`${src}#view=FitH`}
           type="application/pdf"
-          aria-label="Résumé of Vinh Tran"
+          aria-label="Resume of Vinh Tran"
           className="h-[calc(100dvh-18rem)] min-h-125 w-full border-4 border-rule bg-surface"
         >
           {/* Rendered when the browser has no PDF plug-in at all. */}
@@ -54,7 +54,7 @@ export function ResumeViewer({ src, summary }: ResumeViewerProps) {
               download
               className="text-accent-text underline underline-offset-4"
             >
-              Download the résumé
+              Download the resume
             </a>{" "}
             instead.
           </p>

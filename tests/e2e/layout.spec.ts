@@ -11,9 +11,10 @@ for (const path of PAGES) {
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: document.documentElement.clientWidth,
       }));
-      expect(scrollWidth, `overflow by ${scrollWidth - clientWidth}px`).toBeLessThanOrEqual(
-        clientWidth,
-      );
+      expect(
+        scrollWidth,
+        `overflow by ${scrollWidth - clientWidth}px`,
+      ).toBeLessThanOrEqual(clientWidth);
     });
   }
 }
@@ -31,14 +32,21 @@ test("metric content never overflows its own border", async ({ page }) => {
 
   const overflowing = await page.evaluate(() => {
     const bad: string[] = [];
-    for (const box of document.querySelectorAll<HTMLElement>(".border-2, .border-4")) {
-      const inner = box.querySelector<HTMLElement>("span.inline-flex, span[aria-hidden='true']");
+    for (const box of document.querySelectorAll<HTMLElement>(
+      ".border-2, .border-4",
+    )) {
+      const inner = box.querySelector<HTMLElement>(
+        "span.inline-flex, span[aria-hidden='true']",
+      );
       if (!inner || !box.querySelector(".font-mono")) continue;
       const b = box.getBoundingClientRect();
       const i = inner.getBoundingClientRect();
       const padRight = parseFloat(getComputedStyle(box).paddingRight);
       const slack = b.right - padRight - i.right;
-      if (slack < 0) bad.push(`"${inner.textContent?.trim().slice(0, 20)}" overflows by ${Math.round(-slack)}px`);
+      if (slack < 0)
+        bad.push(
+          `"${inner.textContent?.trim().slice(0, 20)}" overflows by ${Math.round(-slack)}px`,
+        );
     }
     return bad;
   });
@@ -50,13 +58,17 @@ test("metric content never overflows its own border", async ({ page }) => {
  * Regression: Button hardcoded `text-ink`. Inside an inverted block `ink`
  * IS the background, so GitHub/LinkedIn rendered #0A0A0A on #0A0A0A — 1:1.
  */
-test("no element renders text the same colour as its background", async ({ page }) => {
+test("no element renders text the same colour as its background", async ({
+  page,
+}) => {
   await page.goto("/");
   await settle(page);
 
   const invisible = await page.evaluate(() => {
     const bad: string[] = [];
-    for (const el of document.querySelectorAll<HTMLElement>("a,button,span,p,h1,h2,h3")) {
+    for (const el of document.querySelectorAll<HTMLElement>(
+      "a,button,span,p,h1,h2,h3",
+    )) {
       const text = (el.textContent || "").trim();
       if (text.length < 2 || el.closest(".sr-only")) continue;
       const s = getComputedStyle(el);
@@ -64,10 +76,14 @@ test("no element renders text the same colour as its background", async ({ page 
       let bg = "";
       while (n) {
         const c = getComputedStyle(n).backgroundColor;
-        if (c && c !== "rgba(0, 0, 0, 0)") { bg = c; break; }
+        if (c && c !== "rgba(0, 0, 0, 0)") {
+          bg = c;
+          break;
+        }
         n = n.parentElement;
       }
-      if (bg && s.color === bg) bad.push(`"${text.slice(0, 26)}" is ${s.color} on ${bg}`);
+      if (bg && s.color === bg)
+        bad.push(`"${text.slice(0, 26)}" is ${s.color} on ${bg}`);
     }
     return bad;
   });
@@ -75,11 +91,16 @@ test("no element renders text the same colour as its background", async ({ page 
   expect(invisible, invisible.join("\n")).toEqual([]);
 });
 
-test("the whole project card is clickable, not just the title text", async ({ page }) => {
+test("the whole project card is clickable, not just the title text", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await settle(page);
-  const card = page.locator("article").filter({ hasText: "Redis Lite" }).first();
+  const card = page
+    .locator("article")
+    .filter({ hasText: "Redis Lite" })
+    .first();
   await card.scrollIntoViewIfNeeded();
   const box = (await card.boundingBox())!;
   // Far corner, nowhere near the <a> text.
@@ -87,7 +108,9 @@ test("the whole project card is clickable, not just the title text", async ({ pa
   await page.waitForURL("**/work/redis-lite");
 });
 
-test("touch targets meet 44px, excluding stretched-link titles", async ({ page }) => {
+test("touch targets meet 44px, excluding stretched-link titles", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await settle(page);
@@ -96,11 +119,15 @@ test("touch targets meet 44px, excluding stretched-link titles", async ({ page }
       .filter((el) => {
         // A stretched link's real hit area is its positioned ancestor.
         if (el.className?.toString().includes("after:absolute")) return false;
-        if (el.closest(".sr-only") || el.textContent?.match(/skip to content/i)) return false;
+        if (el.closest(".sr-only") || el.textContent?.match(/skip to content/i))
+          return false;
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0 && (r.width < 44 || r.height < 44);
       })
-      .map((el) => `${(el.textContent || "").trim().slice(0, 24)} ${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`),
+      .map(
+        (el) =>
+          `${(el.textContent || "").trim().slice(0, 24)} ${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`,
+      ),
   );
   expect(small, small.join("\n")).toEqual([]);
 });

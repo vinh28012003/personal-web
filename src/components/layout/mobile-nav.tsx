@@ -92,7 +92,7 @@ export function MobileNav({ items, resumeHref }: MobileNavProps) {
               onClick={close}
               className="border-b-2 border-rule bg-accent px-5 py-5 text-h3 uppercase text-accent-fg transition-none"
             >
-              Résumé
+              Resume
             </a>
           </nav>
         </div>
