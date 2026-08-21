@@ -53,11 +53,11 @@ export default async function ProjectPage({
           <header className="border-b-4 border-rule px-5 pt-12 pb-12 md:px-8 md:pt-16 md:pb-16">
             <div className="mx-auto max-w-7xl">
               <Link
-                href="/#work"
+                href="/#projects"
                 className="inline-flex min-h-11 items-center gap-2 font-mono text-label uppercase text-muted transition-none hover:bg-on-ground hover:text-ground"
               >
                 <ArrowRightIcon className="rotate-180" />
-                All work
+                All projects
               </Link>
 
               <h1 className="mt-6 text-h1 uppercase">{project.name}</h1>

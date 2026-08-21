@@ -59,8 +59,8 @@ export function Hero() {
             <DownloadIcon />
             Résumé
           </Button>
-          <Button href="/#work" variant="secondary" size="lg">
-            See the work
+          <Button href="/#projects" variant="secondary" size="lg">
+            See the projects
             <ArrowRightIcon />
           </Button>
         </div>

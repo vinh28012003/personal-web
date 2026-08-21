@@ -72,7 +72,7 @@ export function FeaturedProjects() {
   return (
     <section className="px-5 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-7xl">
-        <SectionHeader index="01" title="Work" id="work" />
+        <SectionHeader index="01" title="Projects" id="projects" />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
           {projects.map((project, i) => (
