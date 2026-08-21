@@ -5,7 +5,7 @@ import { ResumeViewer } from "@/components/resume/resume-viewer";
 
 export const metadata: Metadata = {
   title: "Résumé",
-  description: `Résumé of ${profile.name} — ${profile.role}, ${profile.graduation}.`,
+  description: `Résumé of ${profile.name}. ${profile.role}, ${profile.graduation}.`,
   alternates: { canonical: "/resume" },
 };
 
@@ -15,7 +15,7 @@ const SUMMARY = [
   `Currently ${experience[0].role} at ${experience[0].org}`,
   "4 backend/infrastructure internships across Hanoi and West Lafayette",
   "Redis server in C++ serving 375K+ pipelined ops/sec",
-  "CForge — runtime configuration library published to npm and PyPI",
+  "CForge, a runtime configuration library published to npm and PyPI",
 ] as const;
 
 export default function ResumePage() {

@@ -120,3 +120,30 @@ test("site icons are served and linked", async ({ page, request }) => {
   const res = await request.get("/favicon.ico");
   expect(res.status(), "default favicon.ico should be gone").toBe(404);
 });
+
+/**
+ * Em-dashes read as a machine-writing tell, and they had spread through the
+ * copy: prose asides, title separators, date ranges, even a list bullet.
+ * This checks what a visitor actually sees, not the source, so it also
+ * catches one arriving through content or metadata.
+ */
+test("no em-dash or en-dash appears anywhere a visitor can see", async ({ page }) => {
+  for (const route of ["/", "/resume", "/work/redis-lite", "/work/cforge"]) {
+    await page.goto(route);
+
+    const visible = await page.evaluate(() => document.body.innerText);
+    const offenders = visible
+      .split("\n")
+      .filter((l) => l.includes("—") || l.includes("–"));
+    expect(offenders, `dash in visible text on ${route}:\n${offenders.join("\n")}`).toEqual([]);
+
+    // Title and description surface in tabs, search results and link previews.
+    const title = await page.title();
+    expect(title, `dash in <title> on ${route}`).not.toMatch(/[–—]/);
+
+    const desc = await page.getAttribute('meta[name="description"]', "content");
+    if (desc) {
+      expect(desc, `dash in meta description on ${route}`).not.toMatch(/[–—]/);
+    }
+  }
+});

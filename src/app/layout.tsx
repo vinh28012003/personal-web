@@ -46,11 +46,11 @@ export const metadata: Metadata = {
    */
   alternates: { canonical: "/" },
   title: {
-    default: "Vinh Tran — Backend & Infrastructure Engineer",
-    template: "%s — Vinh Tran",
+    default: "Vinh Tran · Backend & Infrastructure Engineer",
+    template: "%s · Vinh Tran",
   },
   description:
-    "Backend and infrastructure engineer. Purdue CS. I build systems that hold up under load — a 375K ops/sec Redis server, sub-100ms live market data, and Kafka pipelines that cut order processing in half.",
+    "Backend and infrastructure engineer. Purdue CS. I build systems that hold up under load: a 375K ops/sec Redis server, sub-100ms live market data, and Kafka pipelines that cut order processing in half.",
   authors: [{ name: "Vinh Tran" }],
   creator: "Vinh Tran",
   openGraph: {
@@ -58,13 +58,13 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: SITE_URL,
     siteName: "Vinh Tran",
-    title: "Vinh Tran — Backend & Infrastructure Engineer",
+    title: "Vinh Tran · Backend & Infrastructure Engineer",
     description:
       "Purdue CS. Systems that hold up under load: 375K ops/sec Redis server, sub-100ms live market data, Kafka pipelines.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vinh Tran — Backend & Infrastructure Engineer",
+    title: "Vinh Tran · Backend & Infrastructure Engineer",
     description:
       "Purdue CS. Systems that hold up under load: 375K ops/sec Redis server, sub-100ms live market data, Kafka pipelines.",
   },

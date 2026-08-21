@@ -19,7 +19,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       className="slab-3d relative flex h-full flex-col p-5 md:p-8"
     >
       <p className="font-mono text-label uppercase text-muted">
-        {String(index + 1).padStart(2, "0")} — {project.period}
+        {String(index + 1).padStart(2, "0")} · {project.period}
       </p>
 
       <h3 className="mt-3 text-h3 uppercase">
