@@ -40,7 +40,7 @@ export default async function ProjectOgImage({
           color: "#5e5e58",
         }}
       >
-        VINH TRAN — WRITE-UP
+        VINH TRAN · WRITE-UP
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>

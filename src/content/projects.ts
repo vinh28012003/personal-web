@@ -5,7 +5,7 @@ export const projects: readonly Project[] = [
     slug: "redis-lite",
     name: "Redis Lite",
     tagline: "A Redis server built from scratch in C++",
-    period: "January 2026 — February 2026",
+    period: "January 2026 to February 2026",
     stack: ["C++", "Go", "Docker", "AWS EKS", "Terraform", "GitHub Actions"],
     hook: "A single-threaded epoll event loop that serves 375K pipelined operations per second, with automatic failover in under five seconds.",
     headlineMetrics: [
@@ -40,14 +40,14 @@ export const projects: readonly Project[] = [
         heading: "The event loop",
         body: [
           "The core is a single-threaded epoll loop. Every client socket is registered once and the loop reacts to readiness rather than polling, so idle connections cost nothing beyond a file descriptor.",
-          "The gain that mattered most was client buffering. Rather than issuing a write syscall per reply, replies accumulate in a per-client output buffer and flush once per loop iteration. Under a pipelined workload — where a client sends many commands without waiting for responses — this collapses thousands of small writes into a handful of large ones. That is the bulk of the 375K ops/sec figure.",
+          "The gain that mattered most was client buffering. Rather than issuing a write syscall per reply, replies accumulate in a per-client output buffer and flush once per loop iteration. Under a pipelined workload, where a client sends many commands without waiting for responses, this collapses thousands of small writes into a handful of large ones. That is the bulk of the 375K ops/sec figure.",
         ],
       },
       {
         heading: "Durability without stalling the loop",
         body: [
           "Fsync is slow and it does not belong on the thread that serves commands. I moved persistence onto a dedicated IO writer thread, so the event loop hands off work and immediately returns to serving clients.",
-          "Clients that need a durability guarantee use a WAIT sync barrier, which blocks only the caller until its writes are acknowledged rather than blocking the server. Separating the two paths — fast by default, durable on request — produced a five-fold improvement in pipelined write throughput over the version that synced inline.",
+          "Clients that need a durability guarantee use a WAIT sync barrier, which blocks only the caller until its writes are acknowledged rather than blocking the server. Separating the two paths, fast by default and durable on request, produced a five-fold improvement in pipelined write throughput over the version that synced inline.",
         ],
       },
       {
@@ -71,9 +71,9 @@ export const projects: readonly Project[] = [
     slug: "cforge",
     name: "CForge",
     tagline: "Runtime configuration without redeploying",
-    period: "March 2026 — April 2026",
+    period: "March 2026 to April 2026",
     stack: ["JavaScript", "Python", "gRPC", "Protobuf", "Redis", "PostgreSQL", "React"],
-    hook: "An open-source library that injects configuration into a running application in under 10 milliseconds — no restart, no redeploy.",
+    hook: "An open-source library that injects configuration into a running application in under 10 milliseconds. No restart, no redeploy.",
     headlineMetrics: [
       {
         from: "45ms",
@@ -106,14 +106,14 @@ export const projects: readonly Project[] = [
       {
         heading: "Getting to 8 milliseconds",
         body: [
-          "The first version read configuration straight from PostgreSQL on every request, which cost about 45 milliseconds. Postgres is the right place for the durable record — it also tracks which users own which projects — but it is the wrong place to serve a read that happens on a hot path.",
+          "The first version read configuration straight from PostgreSQL on every request, which cost about 45 milliseconds. Postgres is the right place for the durable record, and it also tracks which users own which projects, but it is the wrong place to serve a read that happens on a hot path.",
           "Adding Redis as the serving layer brought that to 8 milliseconds. Postgres remains the system of record; Redis holds the resolved configuration that clients actually read.",
         ],
       },
       {
         heading: "Why gRPC and Protobuf",
         body: [
-          "Client-server communication runs over gRPC with Protobuf-encoded messages. Protobuf keeps the payloads small and, more usefully, makes the configuration schema explicit and versioned — both the JavaScript and Python clients generate from the same definition, so the two implementations cannot drift apart.",
+          "Client-server communication runs over gRPC with Protobuf-encoded messages. Protobuf keeps the payloads small and, more usefully, makes the configuration schema explicit and versioned. Both the JavaScript and Python clients generate from the same definition, so the two implementations cannot drift apart.",
           "Together with the Redis serving layer this delivers configuration from server to application in under 10 milliseconds.",
         ],
       },

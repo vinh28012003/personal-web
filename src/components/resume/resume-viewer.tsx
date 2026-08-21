@@ -66,7 +66,7 @@ export function ResumeViewer({ src, summary }: ResumeViewerProps) {
             {summary.map((line) => (
               <li key={line} className="flex gap-3">
                 <span aria-hidden="true" className="font-mono text-accent-text">
-                  —
+                  ·
                 </span>
                 <span>{line}</span>
               </li>

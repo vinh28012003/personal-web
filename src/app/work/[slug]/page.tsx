@@ -29,7 +29,7 @@ export async function generateMetadata({
     description: project.hook,
     alternates: { canonical: `/work/${project.slug}` },
     openGraph: {
-      title: `${project.name} — Vinh Tran`,
+      title: `${project.name} · Vinh Tran`,
       description: project.hook,
       type: "article",
     },

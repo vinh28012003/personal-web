@@ -22,7 +22,7 @@ function EntryBody({ item }: { item: Experience }) {
 
         <p className="shrink-0 font-mono text-label uppercase text-muted">
           <time dateTime={item.startISO}>{item.start}</time>
-          {" — "}
+          {" to "}
           {item.endISO ? (
             <time dateTime={item.endISO}>{item.end}</time>
           ) : (
