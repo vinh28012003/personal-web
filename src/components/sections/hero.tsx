@@ -1,6 +1,6 @@
 import { profile } from "@/content/profile";
 import { Button } from "@/components/ui/button";
-import { DownloadIcon, ArrowRightIcon } from "@/components/icons";
+import { ArrowRightIcon } from "@/components/icons";
 
 /**
  * The one signature element. Boldness is spent here so everything below can
@@ -78,14 +78,17 @@ export function Hero() {
           className="intro-fade mt-10 flex flex-wrap items-center gap-4"
           style={{ "--intro-i": 2 } as React.CSSProperties}
         >
-          <Button
-            href={profile.resumePath}
-            download
-            variant="primary"
-            size="lg"
-          >
-            <DownloadIcon />
-            Résumé
+          {/*
+            Goes to the preview page rather than downloading straight away.
+            A recruiter can read it in the browser and decide, instead of
+            being handed a file they then have to open. Downloading is the
+            primary action on that page.
+
+            The icon is an arrow, not a download glyph: this navigates.
+          */}
+          <Button href="/resume" variant="primary" size="lg">
+            View résumé
+            <ArrowRightIcon />
           </Button>
           <Button href="/#projects" variant="secondary" size="lg">
             See the projects
