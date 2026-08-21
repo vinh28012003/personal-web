@@ -55,3 +55,48 @@ test("the six recruiter-critical facts are present on the home page", async ({ p
     page.locator('header a[href$=".pdf"]:not(dialog a)'),
   ).toBeVisible();
 });
+
+/* ── sitemap completeness & canonical tags ────────────────────────────── */
+
+/**
+ * Regression: the sitemap was assembled inline as "home plus the projects",
+ * so /resume — added later — silently never appeared. Nothing failed; the
+ * list was just wrong. This asserts the sitemap covers every real route.
+ */
+test("sitemap contains every route the site actually serves", async ({ page, request }) => {
+  const xml = await (await request.get("/sitemap.xml")).text();
+  const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+
+  const expected = ["/", "/resume", "/work/redis-lite", "/work/cforge"];
+  for (const route of expected) {
+    const hit = locs.some((l) => new URL(l).pathname === route);
+    expect(hit, `sitemap is missing ${route}\nhas: ${locs.join(", ")}`).toBe(true);
+  }
+  // And nothing listed that 404s.
+  for (const loc of locs) {
+    const res = await page.goto(new URL(loc).pathname);
+    expect(res?.status(), `sitemap lists ${loc} but it does not resolve`).toBe(200);
+  }
+});
+
+/**
+ * The project is reachable on its *.vercel.app alias as well as the custom
+ * domain, and that alias serves 200 with no noindex. A canonical tag is what
+ * stops the same content being indexed under two hostnames.
+ */
+test("every page emits a canonical pointing at its own path", async ({ page }) => {
+  for (const route of ["/", "/resume", "/work/redis-lite", "/work/cforge"]) {
+    await page.goto(route);
+    const href = await page.getAttribute('link[rel="canonical"]', "href");
+    expect(href, `no canonical on ${route}`).toBeTruthy();
+    expect(new URL(href!).pathname, `wrong canonical on ${route}`).toBe(route);
+  }
+});
+
+test("canonical uses the configured origin, not the request host", async ({ page }) => {
+  await page.goto("/resume");
+  const href = await page.getAttribute('link[rel="canonical"]', "href");
+  const base = await page.getAttribute('meta[property="og:url"]', "content");
+  // Both derive from SITE_URL, so their origins must agree.
+  expect(new URL(href!).origin).toBe(new URL(base!).origin);
+});

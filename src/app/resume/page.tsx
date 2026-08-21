@@ -6,6 +6,7 @@ import { ResumeViewer } from "@/components/resume/resume-viewer";
 export const metadata: Metadata = {
   title: "Résumé",
   description: `Résumé of ${profile.name} — ${profile.role}, ${profile.graduation}.`,
+  alternates: { canonical: "/resume" },
 };
 
 /** Kept short on purpose: this stands in for the PDF on small screens. */

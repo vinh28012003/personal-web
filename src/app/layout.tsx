@@ -34,6 +34,17 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  /**
+   * Tells search engines the real address regardless of which host served
+   * the page. The project is reachable on its *.vercel.app alias as well as
+   * the custom domain, and that alias returns 200 with no noindex header —
+   * without this, the same content is indexable under two hostnames and the
+   * ranking signals split between them.
+   *
+   * Relative values resolve against metadataBase. Pages below override this
+   * with their own path; the sitemap test asserts none is left inheriting.
+   */
+  alternates: { canonical: "/" },
   title: {
     default: "Vinh Tran — Backend & Infrastructure Engineer",
     template: "%s — Vinh Tran",

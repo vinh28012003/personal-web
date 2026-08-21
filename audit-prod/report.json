@@ -1,0 +1,35 @@
+{
+  "target": "https://personal-web-gamma-lemon-52.vercel.app",
+  "consoleErrors": [],
+  "findings": [
+    {
+      "severity": "high",
+      "check": "focus-visible",
+      "message": "10/24 sampled interactive elements show no visible focus indicator.",
+      "viewports": [
+        "mobile-360",
+        "mobile-390"
+      ]
+    },
+    {
+      "severity": "high",
+      "check": "focus-visible",
+      "message": "7/24 sampled interactive elements show no visible focus indicator.",
+      "viewports": [
+        "tablet-768",
+        "laptop-1024",
+        "desktop-1440",
+        "wide-1920"
+      ]
+    },
+    {
+      "severity": "medium",
+      "check": "tap-target",
+      "message": "3 interactive targets < 44×44px on mobile.",
+      "viewports": [
+        "mobile-360",
+        "mobile-390"
+      ]
+    }
+  ]
+}
