@@ -6,8 +6,8 @@ import { MobileNav } from "./mobile-nav";
 import { DownloadIcon } from "@/components/icons";
 
 const NAV = [
-  { href: "/#work", label: "Work" },
-  { href: "/#experience", label: "Experience" },
+  { href: "/#projects", label: "Projects" },
+  { href: "/#experiences", label: "Experiences" },
   { href: "/resume", label: "Résumé" },
   { href: "/#contact", label: "Contact" },
 ] as const;

@@ -71,7 +71,7 @@ export function ExperienceTimeline() {
   return (
     <section className="border-t-4 border-rule px-5 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-7xl">
-        <SectionHeader index="02" title="Experience" id="experience" />
+        <SectionHeader index="02" title="Experiences" id="experiences" />
 
         {/* An ordered list, because the order carries meaning. */}
         <ol className="flex flex-col gap-14 md:gap-20">

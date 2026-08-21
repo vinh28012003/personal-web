@@ -166,3 +166,65 @@ test("every page has a skip link, including 404", async ({ page }) => {
     ).toHaveCount(1);
   }
 });
+
+/* ── section naming & the intro band ──────────────────────────────────── */
+
+test("nav, headings and anchors all say Projects and Experiences", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  const nav = page.locator("header nav");
+  await expect(nav.getByRole("link", { name: "Projects" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Experiences" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: /^Work$/ })).toHaveCount(0);
+
+  // The anchors the nav points at must exist, or the links go nowhere.
+  await expect(page.locator("#projects")).toHaveCount(1);
+  await expect(page.locator("#experiences")).toHaveCount(1);
+  await expect(page.locator("#work, #experience")).toHaveCount(0);
+});
+
+test("every in-page anchor link resolves to a real target", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const hrefs = await page.evaluate(() =>
+    [...document.querySelectorAll('a[href*="#"]')]
+      .map((a) => (a as HTMLAnchorElement).getAttribute("href")!)
+      .filter((h) => h.includes("#") && !h.startsWith("http")),
+  );
+  expect(hrefs.length).toBeGreaterThan(0);
+  for (const href of hrefs) {
+    const id = href.split("#")[1];
+    if (!id) continue;
+    await expect(page.locator(`#${id}`), `broken anchor: ${href}`).toHaveCount(1);
+  }
+});
+
+/**
+ * The band under the hero used to show project metrics with no subject —
+ * "10,219 RECORDS VERIFIED" reads as an orphan number to anyone who has not
+ * yet seen the projects. Those figures belong to the project cards, which
+ * name the system they came from.
+ */
+test("the intro band introduces the person, not project metrics", async ({ page }) => {
+  await page.goto("/");
+  const band = page.locator('section[aria-label="At a glance"]');
+  await expect(band).toBeVisible();
+
+  const text = await band.innerText();
+  expect(text).toMatch(/purdue/i);
+  expect(text).toMatch(/backend/i);
+
+  // Project figures must not appear above the Projects section.
+  for (const figure of ["375K", "10,219", "SSE"]) {
+    expect(text, `"${figure}" belongs in the Projects section`).not.toContain(figure);
+  }
+});
+
+test("project figures still appear inside the Projects section", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const section = page.locator("section").filter({ has: page.locator("#projects") });
+  const text = await section.innerText();
+  expect(text).toContain("375K");
+});

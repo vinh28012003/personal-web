@@ -59,7 +59,7 @@ describe("Button external-link safety", () => {
   });
 
   it("should_not_announce_new_tab_when_href_is_internal", () => {
-    render(<Button href="/#work">See the work</Button>);
+    render(<Button href="/#projects">See the projects</Button>);
     expect(screen.getByRole("link").textContent).not.toMatch(/opens in new tab/i);
   });
 });

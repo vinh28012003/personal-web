@@ -1,5 +1,5 @@
 import { Hero } from "@/components/sections/hero";
-import { ProofStrip } from "@/components/sections/proof-strip";
+import { IntroStrip } from "@/components/sections/intro-strip";
 import { FeaturedProjects } from "@/components/sections/featured-projects";
 import { ExperienceTimeline } from "@/components/sections/experience-timeline";
 import { SkillsMatrix } from "@/components/sections/skills-matrix";
@@ -13,7 +13,7 @@ export default function Home() {
       <JsonLd data={personJsonLd()} />
       <main id="main">
         <Hero />
-        <ProofStrip />
+        <IntroStrip />
         <FeaturedProjects />
         <ExperienceTimeline />
         <SkillsMatrix />
