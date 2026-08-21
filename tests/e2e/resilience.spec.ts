@@ -9,9 +9,13 @@ import { test, expect } from "@playwright/test";
 test.describe("JavaScript disabled", () => {
   test.use({ javaScriptEnabled: false });
 
-  test("all content is visible and nothing is stranded at opacity 0", async ({ page }) => {
+  test("all content is visible and nothing is stranded at opacity 0", async ({
+    page,
+  }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /redis lite/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /redis lite/i }),
+    ).toBeVisible();
     const opacities = await page.evaluate(() =>
       [...document.querySelectorAll("[data-reveal]")].map(
         (el) => getComputedStyle(el).opacity,
@@ -21,35 +25,52 @@ test.describe("JavaScript disabled", () => {
     expect(opacities.every((o) => o === "1")).toBe(true);
   });
 
-  test("the no-js guard class survives so the hiding CSS never applies", async ({ page }) => {
+  test("the no-js guard class survives so the hiding CSS never applies", async ({
+    page,
+  }) => {
     await page.goto("/");
     await expect(page.locator("html.no-js")).toHaveCount(1);
   });
 });
 
 test.describe("prefers-reduced-motion", () => {
-  test("renders the final state immediately with no transition", async ({ page }) => {
+  test("renders the final state immediately with no transition", async ({
+    page,
+  }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
-    const state = await page.locator("[data-reveal]").first().evaluate((el) => {
-      const s = getComputedStyle(el);
-      return { opacity: s.opacity, transform: s.transform, duration: s.transitionDuration };
-    });
+    const state = await page
+      .locator("[data-reveal]")
+      .first()
+      .evaluate((el) => {
+        const s = getComputedStyle(el);
+        return {
+          opacity: s.opacity,
+          transform: s.transform,
+          duration: s.transitionDuration,
+        };
+      });
     expect(state.opacity).toBe("1");
     expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(state.transform);
   });
 });
 
-test("print stylesheet reveals everything for print-to-PDF", async ({ page }) => {
+test("print stylesheet reveals everything for print-to-PDF", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.emulateMedia({ media: "print" });
   const opacities = await page.evaluate(() =>
-    [...document.querySelectorAll("[data-reveal]")].map((el) => getComputedStyle(el).opacity),
+    [...document.querySelectorAll("[data-reveal]")].map(
+      (el) => getComputedStyle(el).opacity,
+    ),
   );
   expect(opacities.every((o) => o === "1")).toBe(true);
 });
 
-test("dark mode swaps the two tokens that would otherwise fail AA", async ({ page }) => {
+test("dark mode swaps the two tokens that would otherwise fail AA", async ({
+  page,
+}) => {
   // Set the theme the way next-themes does. Adding the class by hand races
   // with the provider, which re-applies its own resolved theme on mount.
   await page.addInitScript(() => window.localStorage.setItem("theme", "dark"));

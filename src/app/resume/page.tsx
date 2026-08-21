@@ -4,8 +4,8 @@ import { experience } from "@/content/experience";
 import { ResumeViewer } from "@/components/resume/resume-viewer";
 
 export const metadata: Metadata = {
-  title: "Résumé",
-  description: `Résumé of ${profile.name}. ${profile.role}, ${profile.graduation}.`,
+  title: "Resume",
+  description: `Resume of ${profile.name}. ${profile.role}, ${profile.graduation}.`,
   alternates: { canonical: "/resume" },
 };
 
@@ -23,7 +23,7 @@ export default function ResumePage() {
     <main id="main" className="px-5 py-12 md:px-8 md:py-16">
       <div className="mx-auto max-w-7xl">
         <p className="font-mono text-label uppercase text-muted">Document</p>
-        <h1 className="mt-4 text-h1 uppercase">Résumé</h1>
+        <h1 className="mt-4 text-h1 uppercase">Resume</h1>
         <p className="mt-4 max-w-[52ch] text-lead text-balance">
           Read it here, or take the PDF. Both are the same document.
         </p>

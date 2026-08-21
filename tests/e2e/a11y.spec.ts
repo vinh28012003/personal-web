@@ -3,11 +3,16 @@ import { PAGES, settle, CONTRAST_FN } from "./helpers";
 
 for (const path of PAGES) {
   for (const theme of ["light", "dark"] as const) {
-    test(`every text node meets WCAG AA — ${path} [${theme}]`, async ({ page }) => {
+    test(`every text node meets WCAG AA — ${path} [${theme}]`, async ({
+      page,
+    }) => {
       if (theme === "dark")
-        await page.addInitScript(() => window.localStorage.setItem("theme", "dark"));
+        await page.addInitScript(() =>
+          window.localStorage.setItem("theme", "dark"),
+        );
       await page.goto(path);
-      if (theme === "dark") await expect(page.locator("html.dark")).toHaveCount(1);
+      if (theme === "dark")
+        await expect(page.locator("html.dark")).toHaveCount(1);
       await settle(page);
 
       const failures = await page.evaluate((fnSrc) => {
@@ -58,7 +63,9 @@ for (const path of PAGES) {
             el.tagName +
             (el.getAttribute("aria-label") || "") +
             (el.textContent || "").trim().slice(0, 18),
-          label: (el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 30),
+          label: (el.getAttribute("aria-label") || el.textContent || "")
+            .trim()
+            .slice(0, 30),
           ok: s.outlineStyle !== "none" && parseFloat(s.outlineWidth) > 0,
         };
       });
@@ -89,12 +96,17 @@ test("heading order has no skipped levels", async ({ page }) => {
   await page.goto("/");
   await settle(page);
   const levels = await page.evaluate(() =>
-    [...document.querySelectorAll("h1,h2,h3,h4,h5,h6")].map((h) => +h.tagName[1]),
+    [...document.querySelectorAll("h1,h2,h3,h4,h5,h6")].map(
+      (h) => +h.tagName[1],
+    ),
   );
   expect(levels[0]).toBe(1);
   expect(levels.filter((l) => l === 1)).toHaveLength(1);
   for (let i = 1; i < levels.length; i++) {
-    expect(levels[i] - levels[i - 1], `at index ${i}: ${levels.join(",")}`).toBeLessThanOrEqual(1);
+    expect(
+      levels[i] - levels[i - 1],
+      `at index ${i}: ${levels.join(",")}`,
+    ).toBeLessThanOrEqual(1);
   }
 });
 
@@ -105,7 +117,9 @@ test("zoom is never disabled", async ({ page }) => {
   expect(v).not.toMatch(/maximum-scale\s*=\s*1/);
 });
 
-test("skip link is the first tab stop and becomes visible", async ({ page }) => {
+test("skip link is the first tab stop and becomes visible", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.keyboard.press("Tab");
   const focused = page.locator(":focus");

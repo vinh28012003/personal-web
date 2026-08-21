@@ -87,7 +87,7 @@ export function Hero() {
             The icon is an arrow, not a download glyph: this navigates.
           */}
           <Button href="/resume" variant="primary" size="lg">
-            View résumé
+            View resume
             <ArrowRightIcon />
           </Button>
           <Button href="/#projects" variant="secondary" size="lg">

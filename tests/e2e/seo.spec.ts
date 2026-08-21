@@ -32,19 +32,33 @@ test("unknown project slug returns 404", async ({ page }) => {
   expect(res?.status()).toBe(404);
 });
 
-test("person structured data is valid JSON and names the school", async ({ page }) => {
+test("person structured data is valid JSON and names the school", async ({
+  page,
+}) => {
   await page.goto("/");
-  const raw = await page.locator('script[type="application/ld+json"]').first().textContent();
+  const raw = await page
+    .locator('script[type="application/ld+json"]')
+    .first()
+    .textContent();
   const data = JSON.parse(raw!);
   expect(data["@type"]).toBe("Person");
   expect(data.alumniOf.name).toContain("Purdue");
 });
 
-test("the six recruiter-critical facts are present on the home page", async ({ page }) => {
+test("the six recruiter-critical facts are present on the home page", async ({
+  page,
+}) => {
   await page.goto("/");
   // Display type is uppercased in CSS, so innerText returns "REDIS LITE".
   const text = (await page.locator("body").innerText()).toLowerCase();
-  for (const fact of ["Vinh", "Tran", "Purdue", "December 2025", "Redis Lite", "CForge"]) {
+  for (const fact of [
+    "Vinh",
+    "Tran",
+    "Purdue",
+    "December 2025",
+    "Redis Lite",
+    "CForge",
+  ]) {
     expect(text, `missing: ${fact}`).toContain(fact.toLowerCase());
   }
   // The resume must be reachable without opening a menu or scrolling —
@@ -63,19 +77,26 @@ test("the six recruiter-critical facts are present on the home page", async ({ p
  * so /resume — added later — silently never appeared. Nothing failed; the
  * list was just wrong. This asserts the sitemap covers every real route.
  */
-test("sitemap contains every route the site actually serves", async ({ page, request }) => {
+test("sitemap contains every route the site actually serves", async ({
+  page,
+  request,
+}) => {
   const xml = await (await request.get("/sitemap.xml")).text();
   const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 
   const expected = ["/", "/resume", "/work/redis-lite", "/work/cforge"];
   for (const route of expected) {
     const hit = locs.some((l) => new URL(l).pathname === route);
-    expect(hit, `sitemap is missing ${route}\nhas: ${locs.join(", ")}`).toBe(true);
+    expect(hit, `sitemap is missing ${route}\nhas: ${locs.join(", ")}`).toBe(
+      true,
+    );
   }
   // And nothing listed that 404s.
   for (const loc of locs) {
     const res = await page.goto(new URL(loc).pathname);
-    expect(res?.status(), `sitemap lists ${loc} but it does not resolve`).toBe(200);
+    expect(res?.status(), `sitemap lists ${loc} but it does not resolve`).toBe(
+      200,
+    );
   }
 });
 
@@ -84,7 +105,9 @@ test("sitemap contains every route the site actually serves", async ({ page, req
  * domain, and that alias serves 200 with no noindex. A canonical tag is what
  * stops the same content being indexed under two hostnames.
  */
-test("every page emits a canonical pointing at its own path", async ({ page }) => {
+test("every page emits a canonical pointing at its own path", async ({
+  page,
+}) => {
   for (const route of ["/", "/resume", "/work/redis-lite", "/work/cforge"]) {
     await page.goto(route);
     const href = await page.getAttribute('link[rel="canonical"]', "href");
@@ -93,7 +116,9 @@ test("every page emits a canonical pointing at its own path", async ({ page }) =
   }
 });
 
-test("canonical uses the configured origin, not the request host", async ({ page }) => {
+test("canonical uses the configured origin, not the request host", async ({
+  page,
+}) => {
   await page.goto("/resume");
   const href = await page.getAttribute('link[rel="canonical"]', "href");
   const base = await page.getAttribute('meta[property="og:url"]', "content");
@@ -127,7 +152,9 @@ test("site icons are served and linked", async ({ page, request }) => {
  * This checks what a visitor actually sees, not the source, so it also
  * catches one arriving through content or metadata.
  */
-test("no em-dash or en-dash appears anywhere a visitor can see", async ({ page }) => {
+test("no em-dash or en-dash appears anywhere a visitor can see", async ({
+  page,
+}) => {
   for (const route of ["/", "/resume", "/work/redis-lite", "/work/cforge"]) {
     await page.goto(route);
 
@@ -135,7 +162,10 @@ test("no em-dash or en-dash appears anywhere a visitor can see", async ({ page }
     const offenders = visible
       .split("\n")
       .filter((l) => l.includes("—") || l.includes("–"));
-    expect(offenders, `dash in visible text on ${route}:\n${offenders.join("\n")}`).toEqual([]);
+    expect(
+      offenders,
+      `dash in visible text on ${route}:\n${offenders.join("\n")}`,
+    ).toEqual([]);
 
     // Title and description surface in tabs, search results and link previews.
     const title = await page.title();
@@ -145,5 +175,19 @@ test("no em-dash or en-dash appears anywhere a visitor can see", async ({ page }
     if (desc) {
       expect(desc, `dash in meta description on ${route}`).not.toMatch(/[–—]/);
     }
+  }
+});
+
+test("the word Resume never carries an acute accent", async ({ page }) => {
+  for (const route of ["/", "/resume", "/work/redis-lite"]) {
+    await page.goto(route);
+    const text = await page.evaluate(() => document.body.innerText);
+    expect(text, `accented resume on ${route}`).not.toMatch(
+      /r\u00e9sum|resum\u00e9/i,
+    );
+    const title = await page.title();
+    expect(title, `accented resume in <title> on ${route}`).not.toMatch(
+      /r\u00e9sum|resum\u00e9/i,
+    );
   }
 });

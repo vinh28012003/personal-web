@@ -36,7 +36,7 @@ export function Contact() {
             </Button>
             <Button href={profile.resumePath} download variant="primary">
               <DownloadIcon />
-              Résumé
+              Resume
             </Button>
           </div>
         </div>
