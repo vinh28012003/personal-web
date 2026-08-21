@@ -100,3 +100,23 @@ test("canonical uses the configured origin, not the request host", async ({ page
   // Both derive from SITE_URL, so their origins must agree.
   expect(new URL(href!).origin).toBe(new URL(base!).origin);
 });
+
+test("site icons are served and linked", async ({ page, request }) => {
+  for (const [path, type] of [
+    ["/icon.svg", "image/svg+xml"],
+    ["/apple-icon.png", "image/png"],
+  ]) {
+    const res = await request.get(path);
+    expect(res.status(), path).toBe(200);
+    expect(res.headers()["content-type"], path).toContain(type);
+  }
+
+  await page.goto("/");
+  // Next fingerprints the href, so match on rel rather than exact path.
+  await expect(page.locator('link[rel="icon"]')).toHaveCount(1);
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
+
+  // The stock create-next-app favicon must not come back.
+  const res = await request.get("/favicon.ico");
+  expect(res.status(), "default favicon.ico should be gone").toBe(404);
+});

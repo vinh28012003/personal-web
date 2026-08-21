@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!--
+    VT monogram, drawn as paths rather than text: a favicon cannot rely on a
+    font being available, so the letterforms are geometry.
+
+    Accent ground with near-black marks — 5.54:1, the same pairing the site
+    uses for its primary button. Square corners and no gradient, matching the
+    zero-radius, zero-blur rule everywhere else.
+  -->
+  <rect width="64" height="64" fill="#FF3B00" />
+
+  <!-- V -->
+  <path d="M5 15 H14 L19 38 L24 15 H33 L24 51 H14 Z" fill="#0A0A0A" />
+
+  <!-- T -->
+  <rect x="34" y="15" width="25" height="8" fill="#0A0A0A" />
+  <rect x="42" y="23" width="9" height="28" fill="#0A0A0A" />
+</svg>

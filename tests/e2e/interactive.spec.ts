@@ -29,12 +29,23 @@ test.describe("mobile nav", () => {
     await page.keyboard.press("Escape");
 
     await expect(page.locator("dialog")).not.toHaveAttribute("open", "");
-    const after = await page.evaluate(() => ({
-      label: document.activeElement?.getAttribute("aria-label") ?? "",
-      overflow: document.documentElement.style.overflow,
-    }));
-    expect(after.label, "focus must return to the trigger").toMatch(/open navigation/i);
-    expect(after.overflow, "scroll lock must be released").not.toBe("hidden");
+
+    // Closing is asynchronous: the dialog's close event sets state, React
+    // re-renders, and only then does the effect cleanup restore overflow.
+    // Reading synchronously here catches it mid-flight roughly one run in
+    // three. The invariant is that it SETTLES released, not that it is
+    // released the instant the key is pressed.
+    await expect
+      .poll(
+        () => page.evaluate(() => document.documentElement.style.overflow),
+        { timeout: 3000 },
+      )
+      .not.toBe("hidden");
+
+    const label = await page.evaluate(
+      () => document.activeElement?.getAttribute("aria-label") ?? "",
+    );
+    expect(label, "focus must return to the trigger").toMatch(/open navigation/i);
   });
 
   test("a nav link closes the dialog and navigates", async ({ page }) => {
