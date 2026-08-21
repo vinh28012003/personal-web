@@ -101,31 +101,31 @@ test("hover 3D is not the only affordance on a card", async ({ page }) => {
 
 /* ── first-visit 3D intro ─────────────────────────────────────────────── */
 
-test("the 3D intro plays on a fresh session and only once", async ({
+test("the 3D intro plays on every full page load, refresh included", async ({
   page,
 }) => {
   await page.goto("/");
-  // The hook is set synchronously on mount, before the 1.6s cleanup.
   await expect(page.locator('html[data-intro="run"]')).toHaveCount(1);
 
-  // Second visit in the same session must not replay it.
-  await page.goto("/resume");
-  await page.goto("/");
-  await page.waitForTimeout(200);
-  await expect(page.locator('html[data-intro="run"]')).toHaveCount(0);
+  // A reload is a fresh document, so the inline script runs again.
+  await page.reload();
+  await expect(page.locator('html[data-intro="run"]')).toHaveCount(1);
+
+  // And again.
+  await page.reload();
+  await expect(page.locator('html[data-intro="run"]')).toHaveCount(1);
 });
 
-test("intro elements are never hidden by default — animation is opt-in", async ({
+test("intro elements are never hidden when the intro does not run", async ({
   page,
 }) => {
+  // Reduced motion is now the only thing that suppresses it. The CSS is
+  // opt-in, so with no data-intro attribute the hero simply renders done.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  // Clear the session flag and reload so no intro runs at all.
-  await page.evaluate(() => sessionStorage.clear());
-  await page.addInitScript(() => sessionStorage.setItem("intro-played", "1"));
-  await page.reload();
   await page.waitForTimeout(150);
 
-  await expect(page.locator('html[data-intro="run"]')).toHaveCount(0);
+  await expect(page.locator("html[data-intro]")).toHaveCount(0);
   const opacity = await page
     .locator(".intro-line")
     .first()
@@ -222,20 +222,25 @@ test("intro is armed by the inline script, not after hydration", async ({
   expect(anim).toBe("intro-slab");
 });
 
-test("intro does not replay on reload or on returning to the page", async ({
+test("a client-side return to home does not replay the intro", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/", { waitUntil: "domcontentloaded" });
+  // Let the run finish; the attribute is dropped afterwards.
   await page.waitForTimeout(1800);
-
-  await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator("html[data-intro]")).toHaveCount(0);
 
-  await page.goto("/resume", { waitUntil: "domcontentloaded" });
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(page.locator("html[data-intro]")).toHaveCount(0);
+  // Navigate within the app rather than reloading the document. The inline
+  // script only runs on a document load, so nothing re-arms it.
+  // Scoped to the desktop nav: the mobile dialog also lives inside <header>
+  // and carries its own /resume link.
+  await page.locator('header nav[aria-label="Primary"] a[href="/resume"]').click();
+  await expect(page).toHaveURL(/\/resume$/);
+  await page.locator('header a[href="/"]').first().click();
+  await expect(page).toHaveURL(/\/$/);
 
-  // And the hero is fully visible in both cases.
+  await expect(page.locator("html[data-intro]")).toHaveCount(0);
   const o = await page
     .locator(".intro-line")
     .first()
