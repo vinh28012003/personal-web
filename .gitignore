@@ -40,8 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# design audit artefacts
-/audit-output
+# design audit artefacts (any run: audit-output, audit-prod, ...)
+/audit-*
 
 # test artefacts
 /test-results
