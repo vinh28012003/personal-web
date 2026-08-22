@@ -1,21 +1,23 @@
 import Link from "next/link";
-import { profile } from "@/content/profile";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { MobileNav } from "./mobile-nav";
-import { DownloadIcon } from "@/components/icons";
 
 const NAV = [
   { href: "/#projects", label: "Projects" },
   { href: "/#experiences", label: "Experiences" },
+  { href: "/#toolkit", label: "Toolkit" },
   { href: "/resume", label: "Resume" },
   { href: "/#contact", label: "Contact" },
 ] as const;
 
 /**
- * Server Component. The resume button is the single accent-filled element
- * on screen — the one primary CTA — and it is reachable at every viewport
- * without scrolling, which is the first thing a recruiter looks for.
+ * Server Component. The header carries navigation and nothing else.
+ *
+ * The resume used to sit here a second time, as an accent-filled button that
+ * downloaded the PDF directly. Two controls one word apart pointed at two
+ * different things, so it is now a single nav link to /resume, where the PDF
+ * is previewed and can still be downloaded. The direct download survives in
+ * Contact for anyone who wants the file without the detour.
  */
 export function SiteHeader() {
   return (
@@ -48,22 +50,7 @@ export function SiteHeader() {
 
           <ThemeToggle />
 
-          {/*
-            Visible at EVERY viewport. This is the one primary CTA and the
-            first thing a recruiter looks for — burying it behind the mobile
-            hamburger costs more than the header space it saves.
-          */}
-          <Button
-            href={profile.resumePath}
-            download
-            variant="primary"
-            className="px-3 md:px-5"
-          >
-            <DownloadIcon />
-            Resume
-          </Button>
-
-          <MobileNav items={NAV} resumeHref={profile.resumePath} />
+          <MobileNav items={NAV} />
         </div>
       </div>
     </header>

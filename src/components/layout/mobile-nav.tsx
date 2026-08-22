@@ -6,7 +6,6 @@ import { MenuIcon, CloseIcon } from "@/components/icons";
 
 interface MobileNavProps {
   items: readonly { href: string; label: string }[];
-  resumeHref: string;
 }
 
 /**
@@ -14,7 +13,7 @@ interface MobileNavProps {
  * trap, Escape-to-close, an inert background and ::backdrop for free — all
  * the things a hand-rolled modal gets wrong. No Radix, no headless-ui.
  */
-export function MobileNav({ items, resumeHref }: MobileNavProps) {
+export function MobileNav({ items }: MobileNavProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
@@ -86,14 +85,6 @@ export function MobileNav({ items, resumeHref }: MobileNavProps) {
                 {item.label}
               </Link>
             ))}
-            <a
-              href={resumeHref}
-              download
-              onClick={close}
-              className="border-b-2 border-rule bg-accent px-5 py-5 text-h3 uppercase text-accent-fg transition-none"
-            >
-              Resume
-            </a>
           </nav>
         </div>
       </dialog>

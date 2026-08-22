@@ -95,12 +95,26 @@ test("the hero resume button opens the preview page, not a download", async ({
   await expect(page.getByRole("link", { name: /download pdf/i })).toBeVisible();
 });
 
-test("a direct download is still one click away from the header", async ({
+/**
+ * The header used to carry a download button one word away from a nav link
+ * that went to the preview page instead: two controls, same label, different
+ * destinations. The header now keeps only the link. The direct file download
+ * survives in Contact and on /resume itself, so it is still two clicks at
+ * worst, and this asserts both halves of that trade.
+ */
+test("the direct download moved out of the header and into contact", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
-  const headerBtn = page.locator('header a[href$=".pdf"]:not(dialog a)');
-  await expect(headerBtn).toBeVisible();
-  await expect(headerBtn).toHaveAttribute("download", "");
+
+  // Gone from the header at every viewport. No :not(dialog a) escape hatch
+  // here on purpose: the mobile menu copy was removed too, so the whole
+  // header subtree must be clear of PDF links.
+  await expect(page.locator('header a[href$=".pdf"]')).toHaveCount(0);
+
+  const contactBtn = page
+    .locator("#contact-section")
+    .locator('a[href$=".pdf"]');
+  await expect(contactBtn).toHaveCount(1);
+  await expect(contactBtn).toHaveAttribute("download", "");
 });

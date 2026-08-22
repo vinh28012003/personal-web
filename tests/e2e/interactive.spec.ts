@@ -215,7 +215,7 @@ test("every page has a skip link, including 404", async ({ page }) => {
 
 /* ── section naming & the intro band ──────────────────────────────────── */
 
-test("nav, headings and anchors all say Projects and Experiences", async ({
+test("nav, headings and anchors all say Projects, Experiences and Toolkit", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -224,11 +224,13 @@ test("nav, headings and anchors all say Projects and Experiences", async ({
   const nav = page.locator("header nav");
   await expect(nav.getByRole("link", { name: "Projects" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Experiences" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Toolkit" })).toBeVisible();
   await expect(nav.getByRole("link", { name: /^Work$/ })).toHaveCount(0);
 
   // The anchors the nav points at must exist, or the links go nowhere.
   await expect(page.locator("#projects")).toHaveCount(1);
   await expect(page.locator("#experiences")).toHaveCount(1);
+  await expect(page.locator("#toolkit")).toHaveCount(1);
   await expect(page.locator("#work, #experience")).toHaveCount(0);
 });
 
@@ -367,6 +369,7 @@ test.describe("anchor scrolling", () => {
   for (const [label, id] of [
     ["Projects", "projects"],
     ["Experiences", "experiences"],
+    ["Toolkit", "toolkit"],
     ["Contact", "contact"],
   ] as const) {
     test(`${label} scrolls smoothly and moves focus to the section`, async ({ page }) => {
