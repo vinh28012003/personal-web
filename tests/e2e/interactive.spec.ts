@@ -356,3 +356,109 @@ test("the strapline does not visually compete with the kicker", async ({
   expect(strap.family).not.toMatch(/mono/i);
   expect(strap.size).toBeGreaterThan(kicker.size);
 });
+
+/* ── in-page anchor scrolling ─────────────────────────────────────────── */
+
+test.describe("anchor scrolling", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  for (const [label, id] of [
+    ["Projects", "projects"],
+    ["Experiences", "experiences"],
+    ["Contact", "contact"],
+  ] as const) {
+    test(`${label} scrolls smoothly and moves focus to the section`, async ({ page }) => {
+      await page.goto("/");
+      await page.evaluate(() => window.scrollTo(0, 0));
+
+      await page
+        .locator('header nav[aria-label="Primary"] a', { hasText: new RegExp(`^${label}$`) })
+        .click();
+
+      // Animated, not a jump: sample mid-flight and expect an intermediate
+      // position rather than the destination immediately.
+      await page.waitForTimeout(120);
+      const mid = await page.evaluate(() => window.scrollY);
+      expect(mid, "should be mid-scroll, not already arrived").toBeGreaterThan(0);
+
+      await expect
+        .poll(async () => page.evaluate(() => window.scrollY), { timeout: 4000 })
+        .toBeGreaterThan(mid - 1);
+
+      // Focus must follow the link, or the next Tab resumes from the nav.
+      // Poll rather than guess a delay: focus is set when the animation
+      // finishes, and the furthest section takes noticeably longer.
+      await expect
+        .poll(
+          async () =>
+            page.evaluate(
+              (target) => document.activeElement === document.getElementById(target),
+              id,
+            ),
+          { timeout: 4000 },
+        )
+        .toBe(true);
+      expect(page.url()).toContain(`#${id}`);
+    });
+  }
+
+  test("the section lands clear of the sticky header", async ({ page }) => {
+    await page.goto("/");
+    await page.locator('header nav[aria-label="Primary"] a', { hasText: /^Projects$/ }).click();
+    await page.waitForTimeout(1200);
+    const top = await page.evaluate(
+      () => document.getElementById("projects")!.getBoundingClientRect().top,
+    );
+    const headerH = await page.evaluate(
+      () => document.querySelector("header")!.getBoundingClientRect().height,
+    );
+    expect(top, "heading must not sit under the sticky header").toBeGreaterThanOrEqual(headerH);
+  });
+
+  test("a long scroll is not slower than a short one by much", async ({ page }) => {
+    await page.goto("/");
+    const time = async (label: string) => {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(200);
+      const t0 = Date.now();
+      await page
+        .locator('header nav[aria-label="Primary"] a', { hasText: new RegExp(`^${label}$`) })
+        .click();
+      let last = -1;
+      let stable = 0;
+      while (Date.now() - t0 < 4000) {
+        await page.waitForTimeout(40);
+        const y = await page.evaluate(() => Math.round(window.scrollY));
+        if (y === last) {
+          stable++;
+          if (stable > 2) break;
+        } else stable = 0;
+        last = y;
+      }
+      return Date.now() - t0;
+    };
+    // Duration is clamped, so the furthest section must not take multiples
+    // of the nearest. Native smooth scroll took ~1430ms for this one.
+    expect(await time("Contact")).toBeLessThan(1800);
+  });
+});
+
+test.describe("anchor scrolling with reduced motion", () => {
+  test("jumps instantly rather than animating", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    await page.locator('header nav[aria-label="Primary"] a', { hasText: /^Contact$/ }).click();
+    await page.waitForTimeout(250);
+    const y = await page.evaluate(() => window.scrollY);
+    expect(y, "should already be at the section").toBeGreaterThan(1000);
+  });
+});
+
+test("a link to another page still routes rather than scrolling", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/resume");
+  await page.locator('header nav[aria-label="Primary"] a[href="/#projects"]').click();
+  await expect(page).toHaveURL(/\/#projects$/);
+  await expect(page.locator("#projects")).toHaveCount(1);
+});

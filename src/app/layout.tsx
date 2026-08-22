@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { NoJsScript } from "@/components/layout/no-js-script";
 import { PageEnter } from "@/components/ui/page-enter";
 import { SkipLink } from "@/components/layout/skip-link";
+import { SmoothAnchorScroll } from "@/components/layout/smooth-anchor-scroll";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Analytics } from "@vercel/analytics/next";
@@ -111,6 +112,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             for any position: sticky descendant — the header was being
             dragged ~10px off the top on every route change.
           */}
+          <SmoothAnchorScroll />
           <SkipLink />
           <SiteHeader />
           <PageEnter className="flex-1">{children}</PageEnter>
