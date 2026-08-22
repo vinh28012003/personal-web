@@ -16,6 +16,16 @@
   --primitive-concrete-400: #9c9c96;
   --primitive-blaze-500: #ff3b00; /* THE accent */
   --primitive-blaze-700: #c42d00; /* accent legal on small text (light only) */
+
+  /* Midnight: a blue-black rather than a true black. The undertone is what
+     makes it read as depth instead of absence. Every value verified against
+     the ground it actually sits on. */
+  --primitive-midnight-950: #0a0e27; /* ground */
+  --primitive-midnight-900: #131936; /* card surface, 1.10:1 off the ground */
+  --primitive-midnight-300: #6e7bb5; /* borders, 4.67:1 — clears the 3:1 gate */
+  --primitive-midnight-100: #a6adcb; /* muted text, 8.56:1 */
+  --primitive-midnight-50: #f2f4ff;  /* body text, 17.34:1 */
+  --primitive-amber-400: #ffb020;    /* the one luminous accent, 10.39:1 */
 }
 
 /* ==========================================================================
@@ -32,6 +42,7 @@
   --accent-fg: var(--primitive-ink-950); /*  5.54:1 on an accent fill */
   --rule: var(--primitive-ink-950);
   --focus: var(--primitive-blaze-500); /*  3.42:1 — clears the 3:1 non-text gate */
+  --extrude: var(--primitive-blaze-500); /* hero depth */
 
   /* Ground pair. Components invert against these rather than hardcoding
      ink/paper, so a component dropped into an inverted block still works. */
@@ -43,22 +54,27 @@
 }
 
 .dark {
-  --paper: var(--primitive-ink-950);
-  --surface: var(--primitive-slate-900);
-  --ink: var(--primitive-paper-50); /* 18.93:1 on ink */
-  --muted: var(--primitive-concrete-400); /*  7.17:1 — light value would fail at 3.86:1 */
-  --accent: var(--primitive-blaze-500); /*  5.54:1 — clears 4.5 outright in dark */
-  --accent-text: var(--primitive-blaze-500); /*  collapses onto accent; blaze-700 would fail at 3.51:1 */
-  --accent-fg: var(--primitive-ink-950);
-  --rule: var(--primitive-paper-50);
-  --focus: var(--primitive-blaze-500); /*  5.54:1 */
+  --paper: var(--primitive-midnight-950);
+  --surface: var(--primitive-midnight-900);
+  --ink: var(--primitive-midnight-50); /* 17.34:1 on the ground */
+  --muted: var(--primitive-midnight-100); /*  8.56:1 */
+  --accent: var(--primitive-amber-400); /* 10.39:1 — rare by design */
+  --accent-text: var(--primitive-amber-400);
+  --accent-fg: var(--primitive-midnight-950); /* on an amber fill */
+  /* Borders carry the structure here, so they must clear the 3:1 non-text
+     gate. A dimmer blue-grey looked better and failed it at 2.63:1. */
+  --rule: var(--primitive-midnight-300);
+  --focus: var(--primitive-amber-400); /* 10.39:1 */
+  /* Not amber. Scarcity is what makes the accent read as significant, and a
+     176px extruded headline is the least scarce thing on the page. */
+  --extrude: var(--primitive-midnight-300);
 
-  --ground: var(--primitive-ink-950);
-  --on-ground: var(--primitive-paper-50);
-  /* In dark mode an inverted block is a LIGHT block, so these flip back. */
-  --muted-inverted: var(--primitive-concrete-600); /* 6.24:1 on paper */
-  --accent-text-inverted: var(--primitive-blaze-700); /* 5.39:1 on paper */
+  --ground: var(--primitive-midnight-950);
+  --on-ground: var(--primitive-midnight-50);
+  --muted-inverted: var(--primitive-concrete-600);
+  --accent-text-inverted: var(--primitive-blaze-700);
 }
+
 
 /* ==========================================================================
    LAYER 3 — COMPONENT
@@ -254,6 +270,25 @@
     background-color: var(--ink);
     color: var(--paper);
   }
+
+  /*
+   * On a dark ground, flipping polarity produces a bright white slab that
+   * dominates the page and undoes the mood entirely. Here the block becomes
+   * a raised panel instead: same "this section is distinct" signal, one step
+   * up in luminance rather than a full inversion.
+   *
+   * Text on this surface: body 15.70:1, muted 7.76:1, amber 9.41:1.
+   */
+  .dark .inverted {
+    --ground: var(--primitive-midnight-900);
+    --on-ground: var(--primitive-midnight-50);
+    --rule: var(--primitive-midnight-300);
+    --muted: var(--primitive-midnight-100);
+    --accent-text: var(--primitive-amber-400);
+
+    background-color: var(--primitive-midnight-900);
+    color: var(--primitive-midnight-50);
+  }
 }
 
 /**
@@ -409,12 +444,12 @@
    */
   .text-extruded {
     text-shadow:
-      0.008em 0.008em 0 var(--accent),
-      0.016em 0.016em 0 var(--accent),
-      0.024em 0.024em 0 var(--accent),
-      0.032em 0.032em 0 var(--accent),
-      0.04em 0.04em 0 var(--accent),
-      0.048em 0.048em 0 var(--accent),
+      0.008em 0.008em 0 var(--extrude),
+      0.016em 0.016em 0 var(--extrude),
+      0.024em 0.024em 0 var(--extrude),
+      0.032em 0.032em 0 var(--extrude),
+      0.04em 0.04em 0 var(--extrude),
+      0.048em 0.048em 0 var(--extrude),
       0.056em 0.056em 0 var(--rule),
       0.064em 0.064em 0 var(--rule);
   }
