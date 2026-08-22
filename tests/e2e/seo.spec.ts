@@ -61,13 +61,20 @@ test("the six recruiter-critical facts are present on the home page", async ({
   ]) {
     expect(text, `missing: ${fact}`).toContain(fact.toLowerCase());
   }
-  // The resume must be reachable without opening a menu or scrolling —
-  // it is the primary CTA at every viewport.
-  // The mobile nav <dialog> lives inside <header> and holds a second copy,
-  // so exclude it — we want the always-visible one.
-  await expect(
-    page.locator('header a[href$=".pdf"]:not(dialog a)'),
-  ).toBeVisible();
+  // The resume must still be reachable without opening a menu or scrolling.
+  // The header no longer carries a PDF download button: /resume is the one
+  // route, and the file is downloadable from that page and from Contact.
+  // On desktop the primary nav carries the link; on mobile that nav is
+  // collapsed, so the hero button is what satisfies this. Assert whichever
+  // one is actually on screen — and that it sits above the fold, which is
+  // the half of the requirement a visibility check alone would not catch.
+  const resume = page.locator('a[href="/resume"]:visible').first();
+  await expect(resume).toBeVisible();
+  const box = await resume.boundingBox();
+  expect(box, "the resume link should have a box").not.toBeNull();
+  expect(box!.y, "resume must be reachable without scrolling").toBeLessThan(
+    page.viewportSize()!.height,
+  );
 });
 
 /* ── sitemap completeness & canonical tags ────────────────────────────── */
