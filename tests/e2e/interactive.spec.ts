@@ -84,31 +84,33 @@ test.describe("mobile nav", () => {
 
 test.describe("theme toggle", () => {
   test("switches theme and persists across a reload", async ({ page }) => {
+    // Midnight is the default, so the page opens dark and the toggle moves
+    // to light first.
     await page.goto("/");
-    await expect(page.locator("html.dark")).toHaveCount(0);
-
-    await page.getByRole("button", { name: /switch to dark theme/i }).click();
-    await expect(page.locator("html.dark")).toHaveCount(1);
-    expect(await page.evaluate(() => localStorage.getItem("theme"))).toBe(
-      "dark",
-    );
-
-    await page.reload();
-    await expect(page.locator("html.dark")).toHaveCount(1);
-  });
-
-  test("switching back to light also persists", async ({ page }) => {
-    // Seed once, not via addInitScript — that re-runs on every navigation
-    // and would re-apply "dark" on the reload we are asserting against.
-    await page.goto("/");
-    await page.evaluate(() => localStorage.setItem("theme", "dark"));
-    await page.reload();
     await expect(page.locator("html.dark")).toHaveCount(1);
 
     await page.getByRole("button", { name: /switch to light theme/i }).click();
     await expect(page.locator("html.dark")).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem("theme"))).toBe(
+      "light",
+    );
+
     await page.reload();
     await expect(page.locator("html.dark")).toHaveCount(0);
+  });
+
+  test("switching back to dark also persists", async ({ page }) => {
+    // Seed once, not via addInitScript — that re-runs on every navigation
+    // and would re-apply the value on the reload we are asserting against.
+    await page.goto("/");
+    await page.evaluate(() => localStorage.setItem("theme", "light"));
+    await page.reload();
+    await expect(page.locator("html.dark")).toHaveCount(0);
+
+    await page.getByRole("button", { name: /switch to dark theme/i }).click();
+    await expect(page.locator("html.dark")).toHaveCount(1);
+    await page.reload();
+    await expect(page.locator("html.dark")).toHaveCount(1);
   });
 
   test("has an accessible name before and after hydration", async ({

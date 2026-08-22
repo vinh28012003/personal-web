@@ -84,6 +84,7 @@ test("dark mode swaps the two tokens that would otherwise fail AA", async ({
       accentText: s.getPropertyValue("--accent-text").trim().toLowerCase(),
     };
   });
-  expect(t.muted).toContain("9c9c96");
-  expect(t.accentText).toContain("ff3b00");
+  // Midnight: muted 8.56:1 on the ground, amber 10.39:1.
+  expect(t.muted).toContain("a6adcb");
+  expect(t.accentText).toContain("ffb020");
 });
