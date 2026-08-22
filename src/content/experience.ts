@@ -12,13 +12,17 @@ export const experience: readonly Experience[] = [
     stack: ["Python", "Django", "pytest", "Apache", "Linux", "Git", "PyMOL"],
     bullets: [
       {
-        text: "Verified a behavior-preserving refactor of a production Django cryo-EM application by re-running old and new logic across every production job record, then shipped it as small independently-reviewed pull requests.",
-        metric: {
-          value: "10,219",
-          unit: "job records verified",
-          plain:
-            "Refactor verified against all 10,219 production job records.",
-        },
+        // Was one bullet carrying a "10,219 / job records verified" metric.
+        // The label pointed at the wrong subject: the records were the corpus
+        // the refactor was replayed against, not the thing being checked. As
+        // a figure it also measured input size rather than any outcome, so a
+        // reader had no way to judge it. The count now sits in the sentence,
+        // where it reads as evidence, and the shipping practice gets its own
+        // bullet instead of being appended to this one.
+        text: "Refactored a production Django application used for cryo-EM structure prediction, holding its behavior constant by replaying the old and new code paths against all 10,219 jobs in the production database and comparing their output.",
+      },
+      {
+        text: "Shipped that refactor as a sequence of small pull requests reviewed independently, rather than as one change nobody could read.",
       },
       {
         text: "Resolved recurring web-server outages by moving static-file serving off the Python application to Apache, freeing the WSGI worker pool for requests that actually needed it.",
