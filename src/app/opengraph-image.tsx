@@ -75,7 +75,7 @@ export default function OpengraphImage() {
             color: "#5e5e58",
           }}
         >
-          1,000+ CONCURRENT SSE · 10,219 RECORDS VERIFIED
+          1,000+ CONCURRENT SSE · 10,219 JOBS REPLAYED
         </div>
       </div>
     </div>,

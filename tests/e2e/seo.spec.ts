@@ -55,7 +55,7 @@ test("the six recruiter-critical facts are present on the home page", async ({
     "Vinh",
     "Tran",
     "Purdue",
-    "December 2025",
+    "BS Computer Science",
     "Redis Lite",
     "CForge",
   ]) {
