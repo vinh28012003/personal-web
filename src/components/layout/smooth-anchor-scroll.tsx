@@ -98,6 +98,15 @@ export function SmoothAnchorScroll() {
       // propagation keeps the router from also navigating.
       event.preventDefault();
       event.stopPropagation();
+
+      // That stopPropagation also kills React's synthetic click, which is
+      // delegated at the root, so an onClick on the anchor itself never
+      // runs. The mobile menu relied on exactly that to close itself, and
+      // every link inside it is an in-page anchor -- so the page scrolled
+      // behind a still-open full-screen dialog. Closing here is the only
+      // place that still sees the event.
+      document.querySelector<HTMLDialogElement>("dialog[open]")?.close();
+
       scrollToTarget(target);
       history.pushState(null, "", `#${hash}`);
     }

@@ -59,7 +59,12 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
       <p
         aria-hidden="true"
-        className="mt-6 flex items-center gap-2 pt-2 font-mono text-label uppercase text-accent-text"
+        /*
+          Muted, not accent. This line is aria-hidden and sits inside no link
+          or button, so accent on it spent the colour DESIGN reserves for one
+          primary action, focus and selection on pure decoration.
+        */
+        className="mt-6 flex items-center gap-2 pt-2 font-mono text-label uppercase text-muted"
       >
         Read the write-up
         <ArrowRightIcon />

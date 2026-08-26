@@ -55,12 +55,16 @@ test.describe("mobile nav", () => {
   test("a nav link closes the dialog and navigates", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: /open navigation menu/i }).click();
+    // Every link in the dialog is a same-page anchor now: the resume was
+    // lifted out into the header bar so it is reachable without opening the
+    // dialog at all. Anchor clicks are intercepted by SmoothAnchorScroll in
+    // the capture phase, which is why closing has to happen there.
     await page
       .locator("dialog")
-      .getByRole("link", { name: /^resume$/i })
+      .getByRole("link", { name: /^projects$/i })
       .first()
       .click();
-    await expect(page).toHaveURL(/\/resume$/);
+    await expect(page).toHaveURL(/#projects$/);
     await expect(page.locator("dialog")).toHaveCount(1);
     await expect(page.locator("dialog")).not.toHaveAttribute("open", "");
   });
@@ -84,33 +88,34 @@ test.describe("mobile nav", () => {
 
 test.describe("theme toggle", () => {
   test("switches theme and persists across a reload", async ({ page }) => {
-    // Midnight is the default, so the page opens dark and the toggle moves
-    // to light first.
+    // Light is the default, so the page opens light and the toggle moves to
+    // dark first. enableSystem is off, so this holds regardless of the OS
+    // preference the browser reports.
     await page.goto("/");
-    await expect(page.locator("html.dark")).toHaveCount(1);
-
-    await page.getByRole("button", { name: /switch to light theme/i }).click();
-    await expect(page.locator("html.dark")).toHaveCount(0);
-    expect(await page.evaluate(() => localStorage.getItem("theme"))).toBe(
-      "light",
-    );
-
-    await page.reload();
-    await expect(page.locator("html.dark")).toHaveCount(0);
-  });
-
-  test("switching back to dark also persists", async ({ page }) => {
-    // Seed once, not via addInitScript — that re-runs on every navigation
-    // and would re-apply the value on the reload we are asserting against.
-    await page.goto("/");
-    await page.evaluate(() => localStorage.setItem("theme", "light"));
-    await page.reload();
     await expect(page.locator("html.dark")).toHaveCount(0);
 
     await page.getByRole("button", { name: /switch to dark theme/i }).click();
     await expect(page.locator("html.dark")).toHaveCount(1);
+    expect(await page.evaluate(() => localStorage.getItem("theme"))).toBe(
+      "dark",
+    );
+
     await page.reload();
     await expect(page.locator("html.dark")).toHaveCount(1);
+  });
+
+  test("switching back to light also persists", async ({ page }) => {
+    // Seed once, not via addInitScript — that re-runs on every navigation
+    // and would re-apply the value on the reload we are asserting against.
+    await page.goto("/");
+    await page.evaluate(() => localStorage.setItem("theme", "dark"));
+    await page.reload();
+    await expect(page.locator("html.dark")).toHaveCount(1);
+
+    await page.getByRole("button", { name: /switch to light theme/i }).click();
+    await expect(page.locator("html.dark")).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator("html.dark")).toHaveCount(0);
   });
 
   test("has an accessible name before and after hydration", async ({
@@ -191,16 +196,24 @@ test("sticky header is never displaced during a route transition", async ({
 test("resume viewer adapts when the viewport crosses the breakpoint", async ({
   page,
 }) => {
+  const embed = page.locator('object[type="application/pdf"]');
+  const card = page.getByText(/inline pdf preview is unreliable/i);
+
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/resume");
-  await expect(page.locator('object[type="application/pdf"]')).toHaveCount(0);
+  await expect(embed).toBeHidden();
+  await expect(card).toBeVisible();
 
   // Rotating a tablet used to leave this stuck on the mobile card forever.
+  // CSS answers the width question every frame, so there is nothing to get
+  // stuck: both branches are in the markup and only one is displayed.
   await page.setViewportSize({ width: 1440, height: 900 });
-  await expect(page.locator('object[type="application/pdf"]')).toHaveCount(1);
+  await expect(embed).toBeVisible();
+  await expect(card).toBeHidden();
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.locator('object[type="application/pdf"]')).toHaveCount(0);
+  await expect(embed).toBeHidden();
+  await expect(card).toBeVisible();
 });
 
 test("every page has a skip link, including 404", async ({ page }) => {
