@@ -45,8 +45,12 @@ test.describe("mobile", () => {
   }) => {
     await page.goto("/resume");
     // iOS Safari / Chrome Android render an embedded PDF as a blank box, so
-    // it must not be mounted at all here.
-    await expect(page.locator('object[type="application/pdf"]')).toHaveCount(0);
+    // it must not be SHOWN here. It is in the markup and hidden by CSS
+    // rather than omitted, because a JS-chosen branch had to guess narrow on
+    // the server and served every desktop visitor the mobile card first.
+    // Measured hidden: display none, 0x0, absent from the a11y tree, not
+    // tabbable, and a display:none <object> does not fetch its data.
+    await expect(page.locator('object[type="application/pdf"]')).toBeHidden();
     await expect(page.getByText(/summary/i).first()).toBeVisible();
     await expect(page.getByText(/375K/i).first()).toBeVisible();
     await expect(

@@ -52,3 +52,6 @@ CLAUDE.md
 AGENTS.md
 .claude/
 .mcp.json
+.agents/
+.impeccable/
+skills-lock.json

@@ -17,7 +17,16 @@ function EntryBody({ item }: { item: Experience }) {
         <h3 className="text-h3">
           {item.role}
           <span className="text-muted"> · </span>
-          <span className="text-accent-text">{item.org}</span>
+          {/*
+            Weight, not colour. DESIGN's Scarcity Rule spends the accent on
+            one primary action, focus and selection; four employer names in
+            accent taught a clickable affordance four times over on text that
+            goes nowhere. font-extrabold rather than font-bold because
+            --text-h3--font-weight is already 700, so font-bold here would
+            compute to exactly the role text beside it and differentiate
+            nothing.
+          */}
+          <span className="font-extrabold">{item.org}</span>
         </h3>
 
         <p className="shrink-0 font-mono text-label uppercase text-muted">

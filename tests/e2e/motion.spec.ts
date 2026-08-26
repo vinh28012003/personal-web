@@ -233,9 +233,10 @@ test("a client-side return to home does not replay the intro", async ({
 
   // Navigate within the app rather than reloading the document. The inline
   // script only runs on a document load, so nothing re-arms it.
-  // Scoped to the desktop nav: the mobile dialog also lives inside <header>
-  // and carries its own /resume link.
-  await page.locator('header nav[aria-label="Primary"] a[href="/resume"]').click();
+  // The resume control sits outside <nav> now, as a slab button in the
+  // header bar, and it is the only /resume link in the header -- the mobile
+  // dialog no longer carries a duplicate.
+  await page.locator('header a[href="/resume"]').click();
   await expect(page).toHaveURL(/\/resume$/);
   await page.locator('header a[href="/"]').first().click();
   await expect(page).toHaveURL(/\/$/);
