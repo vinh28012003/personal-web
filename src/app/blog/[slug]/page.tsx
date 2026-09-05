@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPost, publishedPosts } from "@/content/posts";
 import { JsonLd } from "@/components/seo/json-ld";
 import { postJsonLd } from "@/lib/jsonld";
+import { PostDate } from "@/components/blog/post-date";
 
 /**
  * True, unlike work/[slug]'s false, and the difference is deliberate.
@@ -67,14 +68,7 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
 
       <article className="mx-auto max-w-3xl px-5 py-16">
         <header>
-          <p className="text-post-meta uppercase tracking-[0.06em] text-muted">
-            <time dateTime={post.published}>
-              {new Date(`${post.published}T00:00:00Z`).toLocaleDateString(
-                "en-US",
-                { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" },
-              )}
-            </time>
-          </p>
+          <PostDate published={post.published} />
           <h1 className="mt-4 text-post-title">{post.title}</h1>
           <p className="mt-5 text-post-lede text-muted">{post.excerpt}</p>
         </header>

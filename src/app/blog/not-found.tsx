@@ -18,7 +18,7 @@ import Link from "next/link";
 export default function BlogNotFound() {
   return (
     <div className="mx-auto max-w-3xl px-5 py-24">
-      <p className="text-post-meta uppercase tracking-[0.06em] text-muted">
+      <p className="text-post-meta uppercase text-muted">
         Error 404
       </p>
       <h1 className="mt-4 text-post-title">No such post</h1>

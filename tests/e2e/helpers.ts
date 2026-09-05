@@ -1,23 +1,33 @@
 import type { Page } from "@playwright/test";
-import { publishedPosts } from "../../src/content/posts";
-
-export const PAGES = ["/", "/work/redis-lite", "/work/cforge"] as const;
+import { allRoutes } from "../../src/lib/routes";
 
 /**
- * The blog is a second design language, so it gets its own list rather than
- * being folded into PAGES: some portfolio expectations are portfolio-shaped.
- * Everything in ALL_PAGES is a cross-design invariant that must hold in both.
+ * One source, split by filter.
  *
- * Derived, not hand-copied. A literal slug here would go stale on a rename
- * and drop the post from the a11y and overflow sweeps without failing --
- * both loops would simply walk one route fewer.
+ * Every list here is derived from allRoutes() -- the same function the sitemap
+ * is built from. That is not tidiness. The previous shape kept PAGES as a
+ * literal, and a literal is how coverage shrinks without failing: rename a
+ * project and the sweeps below simply walk one route fewer, silently, while
+ * staying green. The near-miss already on the record is the same shape -- a
+ * hand-kept list that omitted /resume dropped it from three seo checks and
+ * nothing went red, because every assertion in those loops is a subset check.
+ *
+ * Deriving PAGES also FIXED a live hole: /resume is in allRoutes() and was
+ * never in the old literal, so it had never been through the WCAG AA sweep or
+ * the four-width overflow sweep at all.
  */
-export const BLOG_PAGES = [
-  "/blog",
-  ...publishedPosts().map((p) => `/blog/${p.slug}`),
-] as const;
+const ALL = allRoutes().map((r) => r.path);
 
-export const ALL_PAGES = [...PAGES, ...BLOG_PAGES] as const;
+/** The portfolio's design language. */
+export const PAGES = ALL.filter((p) => !p.startsWith("/blog"));
+
+/**
+ * The blog's. Kept separate because some expectations are portfolio-shaped;
+ * everything in ALL_PAGES is a cross-design invariant that must hold in both.
+ */
+export const BLOG_PAGES = ALL.filter((p) => p.startsWith("/blog"));
+
+export const ALL_PAGES = ALL;
 
 /**
  * Force every reveal to its final state.

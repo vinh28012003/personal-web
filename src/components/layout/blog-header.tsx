@@ -23,7 +23,7 @@ export function BlogHeader() {
         <div className="flex items-baseline gap-2">
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center font-sans text-post-meta uppercase tracking-[0.06em] hover:text-accent-text"
+            className="inline-flex min-h-11 items-center font-sans text-post-meta uppercase hover:text-accent-text"
           >
             Vinh Tran
           </Link>
@@ -32,7 +32,7 @@ export function BlogHeader() {
           </span>
           <Link
             href="/blog"
-            className="inline-flex min-h-11 items-center text-post-meta uppercase tracking-[0.06em] text-muted hover:text-accent-text"
+            className="inline-flex min-h-11 items-center text-post-meta uppercase text-muted hover:text-accent-text"
           >
             Blog
           </Link>

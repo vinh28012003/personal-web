@@ -122,6 +122,14 @@ export interface Post {
    * Excluded from the index, the sitemap, and generateStaticParams, so a
    * draft cannot be reached at its URL in production. Still importable in
    * dev, which is the point.
+   *
+   * ROUTING only, not build exclusion. blog/[slug] imports its body through a
+   * template literal -- `import(\`@/content/posts/${slug}.mdx\`)` -- and a
+   * bundler cannot know which slugs that will produce, so it includes every
+   * .mdx in the directory. Confirmed: draft prose is present in
+   * .next/server/chunks. No URL serves it and nothing links to it, but the
+   * text ships. Anything genuinely private belongs outside src/content/posts,
+   * not behind this flag.
    */
   draft?: boolean;
 }

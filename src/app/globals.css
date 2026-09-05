@@ -286,11 +286,18 @@
      `.rounded-full` both escape it, so the blog's soft corner is an explicit
      token rather than a re-derivation of a scale that is globally flat. */
   --radius-post: 3px;
-  --radius-post-lg: 6px;
 
-  /* Unused in Phase 1. Phase 2 tunes depth here, not in components. */
-  --perspective-post: 1100px;
-  --z-lift-post: 34px;
+  /* No speculative tokens here. Tailwind tree-shakes an @theme variable that
+     no utility references, so a token declared "for Phase 2" is deleted from
+     the build and only LOOKS reserved. --radius-post-lg, --perspective-post
+     and --z-lift-post were all declared here and all absent from the compiled
+     CSS; a Phase 2 precondition claimed the last two "exist and are unused".
+     Verified with `grep -r perspective-post .next` -> 0 hits.
+
+     @property below is the exception and the reason the contrast is worth
+     writing down: a registration is a declaration in its own right, so
+     --tilt-x, --tilt-y and --depth DO survive with no consumer. Depth tokens
+     land in this block when the component that reads them lands. */
 }
 
 /* Registered now so Phase 2 can transition them. inherits:true on the tilt

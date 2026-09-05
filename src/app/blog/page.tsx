@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { publishedPosts } from "@/content/posts";
+import { PostDate } from "@/components/blog/post-date";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -32,19 +33,7 @@ export default function BlogIndex() {
         {posts.map((p) => (
           <li key={p.slug} className="border-t border-rule py-8">
             <article>
-              <p className="text-post-meta uppercase tracking-[0.06em] text-muted">
-                <time dateTime={p.published}>
-                  {new Date(`${p.published}T00:00:00Z`).toLocaleDateString(
-                    "en-US",
-                    {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      timeZone: "UTC",
-                    },
-                  )}
-                </time>
-              </p>
+              <PostDate published={p.published} />
               <h2 className="mt-3 text-post-h2">
                 <Link
                   href={`/blog/${p.slug}`}

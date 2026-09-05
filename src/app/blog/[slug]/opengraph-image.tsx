@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 import { publishedPosts, getPost } from "@/content/posts";
+import { BLOG_OG } from "@/lib/og-palette";
+import { formatPostDate } from "@/lib/dates";
 
 export const alt = "Blog post by Vinh Tran";
 export const size = { width: 1200, height: 630 };
@@ -14,9 +16,10 @@ export function generateStaticParams() {
  * blog palette rather than the portfolio's, so a shared link looks like the
  * page it opens.
  *
- * Colours are literal because ImageResponse renders outside the document and
- * cannot read CSS custom properties. They must be kept in step with the
- * --blog-* primitives in globals.css by hand; there is no token to import.
+ * Colours come from lib/og-palette.ts. They are still literal hex -- an
+ * ImageResponse renders outside the document and cannot read a custom
+ * property -- but they are named after the --blog-* variables they mirror,
+ * and og-palette.test.ts reads globals.css and fails if the two drift.
  */
 export default async function PostOgImage({
   params,
@@ -35,9 +38,9 @@ export default async function PostOgImage({
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#fdfcf9",
-          color: "#1c1b19",
-          borderTop: "16px solid #2f4b7c",
+          background: BLOG_OG.paper,
+          color: BLOG_OG.ink,
+          borderTop: `16px solid ${BLOG_OG.accent}`,
           padding: "64px 72px",
         }}
       >
@@ -47,7 +50,7 @@ export default async function PostOgImage({
             fontSize: 24,
             letterSpacing: 4,
             fontWeight: 700,
-            color: "#5f5c56",
+            color: BLOG_OG.muted,
           }}
         >
           VINH TRAN · BLOG
@@ -70,7 +73,7 @@ export default async function PostOgImage({
               display: "flex",
               fontSize: 30,
               lineHeight: 1.35,
-              color: "#5f5c56",
+              color: BLOG_OG.muted,
               maxWidth: 940,
             }}
           >
@@ -83,10 +86,14 @@ export default async function PostOgImage({
             display: "flex",
             fontSize: 24,
             letterSpacing: 2,
-            color: "#5f5c56",
+            color: BLOG_OG.muted,
           }}
         >
-          {post?.published ?? ""}
+          {/* The same formatter the index and the post header use. This
+              printed the raw ISO string until the helper existed, so a shared
+              link showed "2026-09-04" where the page it opened said
+              "September 4, 2026". */}
+          {post ? formatPostDate(post.published) : ""}
         </div>
       </div>
     ),

@@ -14,12 +14,14 @@ import { allRoutes } from "../../src/lib/routes";
  */
 const ROUTES = allRoutes().map((r) => r.path);
 
-test("sitemap lists every static route", async ({ request }) => {
-  const res = await request.get("/sitemap.xml");
-  expect(res.status()).toBe(200);
-  const xml = await res.text();
-  for (const slug of ["redis-lite", "cforge"]) expect(xml).toContain(slug);
-});
+/*
+ * "sitemap lists every static route" used to sit here. It was deleted rather
+ * than fixed: it substring-matched two hardcoded project slugs against the raw
+ * XML, so it checked neither static routes nor routes, and every claim it made
+ * is subsumed by "sitemap contains every route the site actually serves"
+ * below, which walks ROUTES and compares parsed <loc> pathnames. It was the
+ * third hand-kept copy in a file whose header commits to having none.
+ */
 
 test("robots.txt points at the sitemap", async ({ request }) => {
   const res = await request.get("/robots.txt");
