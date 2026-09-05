@@ -48,15 +48,15 @@ describe("Post dates", () => {
 
 describe("Post structured data", () => {
   it("should_emit_a_blog_posting_schema", () => {
-    const json = postJsonLd(posts[0]);
+    const json = postJsonLd(publishedPosts()[0]);
     expect(json["@type"]).toBe("BlogPosting");
-    expect(json.headline).toBe(posts[0].title);
-    expect(json.datePublished).toBe(posts[0].published);
+    expect(json.headline).toBe(publishedPosts()[0].title);
+    expect(json.datePublished).toBe(publishedPosts()[0].published);
     expect(json.mainEntityOfPage["@id"]).toBe(json.url);
   });
 
   it("should_omit_dateModified_when_the_post_has_not_been_revised", () => {
-    expect(postJsonLd(posts[0])).not.toHaveProperty("dateModified");
+    expect(postJsonLd(publishedPosts()[0])).not.toHaveProperty("dateModified");
   });
 });
 

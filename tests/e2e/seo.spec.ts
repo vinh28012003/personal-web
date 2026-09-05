@@ -27,12 +27,41 @@ test("robots.txt points at the sitemap", async ({ request }) => {
   expect(await res.text()).toMatch(/sitemap:/i);
 });
 
-test("open graph images render as PNG", async ({ request }) => {
-  for (const url of ["/opengraph-image", "/work/redis-lite/opengraph-image"]) {
-    const res = await request.get(url);
-    expect(res.status(), url).toBe(200);
-    expect(res.headers()["content-type"], url).toContain("image/png");
+/**
+ * Asserts what each page ADVERTISES, not a hardcoded path.
+ *
+ * The previous version fetched "/work/redis-lite/opengraph-image" directly.
+ * That passed while the page stopped referencing it entirely: moving
+ * opengraph-image.tsx out of its page's route segment left the route
+ * resolving but detached from the page's metadata, so every project shared
+ * with no image at all. A hardcoded URL cannot see that, because the URL is
+ * not the contract -- "the page offers an image that resolves" is.
+ */
+test("every page advertises an open graph image that resolves", async ({
+  page,
+  request,
+}) => {
+  for (const route of ROUTES) {
+    await page.goto(route);
+    const href = await page.getAttribute('meta[property="og:image"]', "content");
+    expect(href, `${route} advertises no og:image`).toBeTruthy();
+
+    // og:image is absolute against SITE_URL, which is not the port the test
+    // server runs on. Request the path so it resolves against baseURL, the
+    // same way the canonical test compares new URL(href).pathname.
+    const url = new URL(href!);
+    const res = await request.get(`${url.pathname}${url.search}`);
+    expect(res.status(), `${route} -> ${href}`).toBe(200);
+    expect(res.headers()["content-type"], `${route} -> ${href}`).toContain(
+      "image/png",
+    );
   }
+});
+
+test("the site-level open graph image renders as PNG", async ({ request }) => {
+  const res = await request.get("/opengraph-image");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain("image/png");
 });
 
 test("resume PDF is served for download", async ({ request }) => {

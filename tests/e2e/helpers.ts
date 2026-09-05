@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { publishedPosts } from "../../src/content/posts";
 
 export const PAGES = ["/", "/work/redis-lite", "/work/cforge"] as const;
 
@@ -6,8 +7,15 @@ export const PAGES = ["/", "/work/redis-lite", "/work/cforge"] as const;
  * The blog is a second design language, so it gets its own list rather than
  * being folded into PAGES: some portfolio expectations are portfolio-shaped.
  * Everything in ALL_PAGES is a cross-design invariant that must hold in both.
+ *
+ * Derived, not hand-copied. A literal slug here would go stale on a rename
+ * and drop the post from the a11y and overflow sweeps without failing --
+ * both loops would simply walk one route fewer.
  */
-export const BLOG_PAGES = ["/blog", "/blog/how-i-use-claude-code"] as const;
+export const BLOG_PAGES = [
+  "/blog",
+  ...publishedPosts().map((p) => `/blog/${p.slug}`),
+] as const;
 
 export const ALL_PAGES = [...PAGES, ...BLOG_PAGES] as const;
 
