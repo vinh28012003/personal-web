@@ -1,0 +1,136 @@
+I do not ask an agent to "build me a feature." I make it walk down a ladder,
+and I stop it at every rung.
+
+The ladder has six layers. Each one ends on a question, and the agent waits
+there until I answer. Code does not appear until layer five.
+
+## Why the ladder exists
+
+The failure mode with a capable coding agent is not bad code. It is *plausible*
+code that solves a problem I did not have, built on an assumption nobody stated
+out loud. By the time I read it, the assumption is load bearing and the cost of
+arguing has gone up.
+
+So the layers front-load the arguing.
+
+| Layer | What happens | What I get to change |
+|---|---|---|
+| 1 | Context restated back to me | Whether the problem is even right |
+| 2-3 | Design and trade-offs | The approach, before it has a shape |
+| 4 | Interfaces, edge cases, seams | What the tests will observe |
+| 5 | Implementation | The code itself |
+| 5.5 | Build, tests, and a render | Whether it actually works |
+| 6 | Test coverage | What is guarded going forward |
+
+The interesting one is 5.5, and I will come back to it.
+
+## Approval is scoped, not global
+
+The rule I keep coming back to: **approval covers a change, not a session.**
+
+Once I say go on a fix, the agent should make that fix completely, including the
+mechanical follow-through. Imports. Types. The renames the change forces. Asking
+me about each of those is not caution, it is just latency.
+
+But the moment the work grows a new dependency, a new file, or a design shift,
+that is new scope and the agent stops. The line is not "how many lines" but
+"would I have said yes to this if it had been in the original ask."
+
+> The version of this that fails: an agent that asks permission for every
+> import and then quietly adds a dependency because it was "needed for the fix."
+
+## Layer 5.5 is the one that earns its keep
+
+Every project I work on has a green test suite. That has never been the same
+thing as working.
+
+On [my portfolio](/work/redis-lite) the bugs that actually shipped were these:
+
+- Buttons rendered at 1:1 contrast, fully invisible, because a component
+  hardcoded `text-ink` inside a block where `ink` *is* the background
+- Metric text crossing its own border
+- A white slab dominating a dark preview
+- The mobile resume card served to desktop, because
+  `useSyncExternalStore` has to return the server value on the first pass and
+  the server has no viewport to measure
+
+Not one of those failed a test. Every one of them was obvious in a screenshot.
+
+So the rule is: **a change is done when it has been looked at**, not when the
+suite is green.
+
+```bash
+# Kill any running server first. Playwright reuses an existing one,
+# so a stale server serves a half-written .next and every measurement
+# after it describes code that is no longer there.
+pkill -f "next start"
+pnpm build && pnpm start -p 3210 &
+pnpm audit --url http://localhost:3210 --out audit-output
+```
+
+Then I open the PNGs. That is the whole trick.
+
+---
+
+## Where measurement still beats looking
+
+Screenshots lie about small type. On the same site, a row of labels *looked*
+correct and computed smaller than the chips they were built to outrank, because
+one component carried a responsive size class and the other did not.
+
+The reverse is also true: measurements lie about composition. A layout can be
+numerically correct and still have a dangling arrow where a chain wraps.
+
+The habit that works is doing both, and knowing which question you are asking:
+
+1. Anything about **size, weight, or spacing**: read `getComputedStyle`.
+2. Anything about **composition**: look at the picture.
+   - Set `data-motion="off"` first, or scroll animations leave off-screen rows
+     at keyframe zero and every rect you measure is skewed by a `matrix3d`.
+
+## The same ladder works away from the keyboard
+
+I use the layers for data structures practice too, which is where the C++
+shows up. The point is never to have the answer written for me:
+
+```cpp
+// I ask for the invariant first, in prose, before any code.
+// "Every node in the left subtree is < root" is a claim I can check
+// against a failing case. A finished implementation is not.
+struct Node {
+    int key;
+    Node* left;
+    Node* right;
+};
+
+bool contains(const Node* n, int key) {
+    while (n != nullptr) {
+        if (key == n->key) return true;
+        n = key < n->key ? n->left : n->right;
+    }
+    return false;
+}
+```
+
+If I cannot state the invariant, I do not understand the structure yet, and
+reading a correct implementation will not fix that. It will just feel like it
+did.
+
+> The goal is a better engineer, not a faster task.
+
+That line sits at the top of my configuration file, and it is the only part of
+it I have never edited.
+
+## What I would tell someone starting
+
+Write the protocol down. Not in your head, in a file the agent reads every
+session. Mine lives in `~/.claude/CLAUDE.md`, and the per-project overrides
+live beside the code they govern.
+
+Then prune it. The temptation is to keep adding rules, because adding feels
+safe and removing feels risky. What you get is sediment: stale layers you have
+to core through to find what is still true. If a line does not change what the
+agent does, it is costing you attention and buying nothing.
+
+The Claude Code docs are [here](https://docs.claude.com/en/docs/claude-code) if
+you want the mechanics. The mechanics are the easy part.

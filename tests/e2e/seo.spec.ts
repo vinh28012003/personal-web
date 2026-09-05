@@ -1,4 +1,18 @@
 import { test, expect } from "@playwright/test";
+import { allRoutes } from "../../src/lib/routes";
+
+/**
+ * Read from the same source the sitemap is built from, rather than a second
+ * hand-kept copy.
+ *
+ * routes.ts has always claimed "the sitemap and the tests that guard it read
+ * from the same source" and "the sitemap test fails if you don't". Until now
+ * that was aspirational: nothing imported allRoutes(), so the lists drifted
+ * by hand. Adding /blog to routes.ts and forgetting it here would have gone
+ * unnoticed, and folding these loops into a helper list that happened to omit
+ * /resume silently dropped it from three checks.
+ */
+const ROUTES = allRoutes().map((r) => r.path);
 
 test("sitemap lists every static route", async ({ request }) => {
   const res = await request.get("/sitemap.xml");
@@ -91,7 +105,7 @@ test("sitemap contains every route the site actually serves", async ({
   const xml = await (await request.get("/sitemap.xml")).text();
   const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 
-  const expected = ["/", "/resume", "/work/redis-lite", "/work/cforge"];
+  const expected = ROUTES;
   for (const route of expected) {
     const hit = locs.some((l) => new URL(l).pathname === route);
     expect(hit, `sitemap is missing ${route}\nhas: ${locs.join(", ")}`).toBe(
@@ -115,7 +129,7 @@ test("sitemap contains every route the site actually serves", async ({
 test("every page emits a canonical pointing at its own path", async ({
   page,
 }) => {
-  for (const route of ["/", "/resume", "/work/redis-lite", "/work/cforge"]) {
+  for (const route of ROUTES) {
     await page.goto(route);
     const href = await page.getAttribute('link[rel="canonical"]', "href");
     expect(href, `no canonical on ${route}`).toBeTruthy();
@@ -162,7 +176,7 @@ test("site icons are served and linked", async ({ page, request }) => {
 test("no em-dash or en-dash appears anywhere a visitor can see", async ({
   page,
 }) => {
-  for (const route of ["/", "/resume", "/work/redis-lite", "/work/cforge"]) {
+  for (const route of ROUTES) {
     await page.goto(route);
 
     const visible = await page.evaluate(() => document.body.innerText);

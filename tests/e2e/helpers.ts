@@ -3,6 +3,15 @@ import type { Page } from "@playwright/test";
 export const PAGES = ["/", "/work/redis-lite", "/work/cforge"] as const;
 
 /**
+ * The blog is a second design language, so it gets its own list rather than
+ * being folded into PAGES: some portfolio expectations are portfolio-shaped.
+ * Everything in ALL_PAGES is a cross-design invariant that must hold in both.
+ */
+export const BLOG_PAGES = ["/blog", "/blog/how-i-use-claude-code"] as const;
+
+export const ALL_PAGES = [...PAGES, ...BLOG_PAGES] as const;
+
+/**
  * Force every reveal to its final state.
  *
  * Scroll-driven reveals are correct for a human but leave off-screen

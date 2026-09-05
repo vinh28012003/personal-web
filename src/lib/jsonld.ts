@@ -1,6 +1,6 @@
 import { profile } from "@/content/profile";
 import { experience } from "@/content/experience";
-import type { Project } from "@/content/types";
+import type { Post, Project } from "@/content/types";
 import { SITE_URL as BASE } from "@/lib/site";
 
 /** Person schema for the home page. */
@@ -38,5 +38,25 @@ export function projectJsonLd(project: Project) {
     programmingLanguage: project.stack,
     author: { "@type": "Person", name: profile.name, url: BASE },
     ...(project.links?.github && { codeRepository: project.links.github }),
+  };
+}
+
+/** BlogPosting schema for a post. */
+export function postJsonLd(post: Post) {
+  const url = `${BASE}/blog/${post.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    url,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    datePublished: post.published,
+    ...(post.updated && { dateModified: post.updated }),
+    keywords: [...post.tags],
+    inLanguage: "en-US",
+    image: `${url}/opengraph-image`,
+    author: { "@type": "Person", name: profile.name, url: BASE },
+    publisher: { "@type": "Person", name: profile.name, url: BASE },
   };
 }

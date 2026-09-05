@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { PAGES, settle } from "./helpers";
+import { ALL_PAGES, settle } from "./helpers";
 
-for (const path of PAGES) {
+for (const path of ALL_PAGES) {
   for (const width of [320, 375, 768, 1440]) {
     test(`no horizontal scroll at ${width}px — ${path}`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });

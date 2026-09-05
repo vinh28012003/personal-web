@@ -7,6 +7,11 @@ const NAV = [
   { href: "/#projects", label: "Projects" },
   { href: "/#experiences", label: "Experiences" },
   { href: "/#toolkit", label: "Toolkit" },
+  /* The one route link among four anchors. It reaches the mobile dialog for
+     free, and unlike an anchor it is untouched by SmoothAnchorScroll (which
+     only intercepts hrefs containing "#"), so MobileNav's onClick={close}
+     fires normally. */
+  { href: "/blog", label: "Blog" },
   { href: "/#contact", label: "Contact" },
 ] as const;
 
