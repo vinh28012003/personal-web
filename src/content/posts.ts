@@ -11,6 +11,24 @@ import type { Post } from "./types";
  */
 export const posts: readonly Post[] = [
   {
+    slug: "what-i-am-working-toward",
+    title: "What I am working toward",
+    published: "2026-09-05",
+    excerpt:
+      "Two projects built to find out which parts of a system I only thought I understood, and where that points next.",
+    tags: ["system-design", "workflow"],
+    // Draft: the direction sections still need real content. See the MDX.
+    draft: true,
+  },
+  {
+    slug: "system-design-by-building",
+    title: "System design, learned by building it wrong first",
+    published: "2026-09-05",
+    excerpt:
+      "Backpressure, durability and consensus are easy to read about and hard to believe until something you wrote falls over. What two projects actually taught me.",
+    tags: ["system-design"],
+  },
+  {
     slug: "how-i-use-claude-code",
     title: "How I use Claude Code",
     published: "2026-09-04",

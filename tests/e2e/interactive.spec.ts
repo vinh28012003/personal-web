@@ -217,7 +217,14 @@ test("resume viewer adapts when the viewport crosses the breakpoint", async ({
 });
 
 test("every page has a skip link, including 404", async ({ page }) => {
-  for (const path of ["/", "/resume", "/work/redis-lite", "/work/nope"]) {
+  for (const path of [
+    "/",
+    "/resume",
+    "/work/redis-lite",
+    "/work/nope",
+    "/blog",
+    "/blog/nope",
+  ]) {
     await page.goto(path);
     await expect(
       page.getByRole("link", { name: /skip to content/i }),
@@ -409,4 +416,32 @@ test("a link to another page still routes rather than scrolling", async ({ page 
   await page.locator('header nav[aria-label="Primary"] a[href="/#projects"]').click();
   await expect(page).toHaveURL(/\/#projects$/);
   await expect(page.locator("#projects")).toHaveCount(1);
+});
+
+/**
+ * A 404 must wear the chrome of the section whose URL was asked for.
+ *
+ * These are two different boundaries and they resolve differently.
+ * app/not-found.tsx sits ABOVE the (portfolio) group, so it calls
+ * PortfolioShell itself; app/blog/not-found.tsx sits INSIDE the blog layout
+ * and inherits it. The blog one only runs because blog/[slug] sets
+ * dynamicParams = true -- under false, an unmatched slug is a routing-level
+ * 404 that never enters the segment, and a bad post URL renders the
+ * portfolio's brutalist 404 inside the blog's URL space.
+ */
+test("a 404 keeps the chrome of the section it was asked for", async ({
+  page,
+}) => {
+  const blog = await page.goto("/blog/nope");
+  expect(blog?.status()).toBe(404);
+  await expect(page.locator(".blog")).toHaveCount(1);
+  await expect(page.locator("#main")).toHaveCount(1);
+
+  const work = await page.goto("/work/nope");
+  expect(work?.status()).toBe(404);
+  await expect(page.locator(".blog")).toHaveCount(0);
+  await expect(page.locator("#main")).toHaveCount(1);
+  await expect(
+    page.locator('header nav[aria-label="Primary"]'),
+  ).toHaveCount(1);
 });

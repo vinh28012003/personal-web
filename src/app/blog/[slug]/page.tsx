@@ -4,8 +4,21 @@ import { getPost, publishedPosts } from "@/content/posts";
 import { JsonLd } from "@/components/seo/json-ld";
 import { postJsonLd } from "@/lib/jsonld";
 
-/** Unknown slugs are a real 404, not a runtime render. Same as work/[slug]. */
-export const dynamicParams = false;
+/**
+ * True, unlike work/[slug]'s false, and the difference is deliberate.
+ *
+ * With dynamicParams = false an unmatched slug is a ROUTING-level 404: the
+ * segment is never entered, notFound() is never called, and app/blog/
+ * not-found.tsx never runs -- so a bad post URL renders the portfolio's
+ * brutalist 404 inside the blog's URL space. It also made the notFound()
+ * call below dead code.
+ *
+ * True lets the page render, miss, and call notFound(), which the blog's own
+ * boundary catches. Known posts are still prerendered by generateStaticParams;
+ * the only cost is that an unknown slug does a little server work before
+ * returning its 404.
+ */
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return publishedPosts().map((p) => ({ slug: p.slug }));

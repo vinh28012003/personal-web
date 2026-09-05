@@ -1,0 +1,109 @@
+I did not learn system design from a book. I learned the parts I actually
+understand by building two things that were too slow, and then finding out why.
+
+Everything below is a lesson I got wrong first.
+
+## Event loops teach you about backpressure, eventually
+
+Redis Lite is a Redis server in C++ on a single-threaded epoll loop. The
+headline number is 375,000 pipelined operations per second, but the number is
+not the lesson. The lesson is what happened before it.
+
+A single-threaded loop is easy to reason about right up until a client stops
+reading. Then the write side blocks, the loop stops turning, and every other
+connection stalls behind one slow reader. The event loop is not the hard part.
+Deciding what to do when the other end is slower than you are is the hard part.
+
+The fix was a dedicated IO writer thread, and it was worth five times the
+pipelined write throughput. But the reason it worked is not "threads are
+faster." It is that writing to a socket and deciding what to write are two
+different jobs with two different failure modes, and I had them in one place.
+
+> If a component gets slower when its peer gets slower, you have coupling you
+> did not intend.
+
+## Durability is a latency decision wearing a correctness costume
+
+`fsync` is where this got uncomfortable.
+
+The naive version calls `fsync` on the loop thread. Correct, and it destroys
+the p99, because the loop now waits on a disk. The next version does it off
+the loop, which is fast and quietly changes what you are promising: an
+acknowledged write can now be lost.
+
+There is no version where you get both. What you get to choose is **who finds
+out**:
+
+| Approach | Latency | What a crash costs |
+|---|---|---|
+| `fsync` on the loop | worst | nothing acknowledged is lost |
+| `fsync` off the loop | best | recent acknowledged writes |
+| Batched, bounded window | middle | writes inside the window |
+
+That table is the whole of the durability discussion, and I did not understand
+it until I had written all three.
+
+## Replication made me pick a side of CAP on purpose
+
+Redis Lite replicates asynchronously and fails over in under five seconds.
+Asynchronous means the primary acknowledges before a replica has the write, so
+a partition keeps the system **available** and lets it serve slightly stale
+reads. That is a choice, not an accident.
+
+The opt-out is a `WAIT`-style call: block until N replicas confirm. Stronger
+guarantee, worse latency, same system. Which is the actual insight. Consistency
+is rarely a property of a database. It is usually a property of the specific
+call you made.
+
+Failover is where the reading and the building diverge most. Every article
+tells you to promote a replica. None of them prepare you for deciding how long
+to wait before you believe the primary is really gone, or what happens to the
+writes that were in flight while you decided.
+
+## Latency budgets are the most useful idea I have stolen
+
+cforge injects configuration into a running application without a restart. It
+went from 45 milliseconds to 8.
+
+The way I got there was not profiling first. It was writing down what the
+budget had to be and then finding out which parts refused to fit:
+
+1. Decide the number the feature needs (under 10ms, or a restart is simpler).
+2. Split it across the hops: fetch, parse, validate, swap.
+3. Measure each hop against its slice, not against the total.
+4. Whichever hop cannot fit its slice is the design problem, not the slow code.
+
+Step 4 is the one that matters. Twice the answer was not "optimise this
+function" but "this hop should not exist on the hot path."
+
+```cpp
+// The version that missed the budget: validate on every read.
+// The version that met it: validate once at swap time, then reads are
+// a pointer load. Same total work, moved off the path that was timed.
+const Config& current() const { return *active_.load(std::memory_order_acquire); }
+```
+
+## What I am reading against
+
+Building first and reading second works better for me than the reverse,
+because the reading finally has somewhere to land. The pattern I keep
+repeating:
+
+- Build the naive version and find its specific failure.
+- Read about that failure, not about the general topic.
+- Rebuild.
+
+Concretely, that meant reading about buffer management **after** watching a
+slow client stall a loop, and reading about consensus **after** writing a
+failover I did not fully trust.
+
+## Next: Raft, in the thing I already have
+
+The obvious next step is consensus, and the useful version of it is not a
+standalone toy. Redis Lite already has replication and a failover path I
+picked by hand. Raft replaces the hand-picked part with something that can
+explain itself.
+
+Deepening a project I already understand beats starting a new one cold, for
+the same reason the loop above works: the failures land somewhere I have
+context for.
