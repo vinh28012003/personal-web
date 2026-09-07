@@ -406,6 +406,41 @@ test("the desk tilts toward the pointer and returns to rest", async ({
 });
 
 /**
+ * The other half of the interaction, and it had no coverage at all: the
+ * desktop tilt test is fine-pointer only, so on a phone nothing asserted
+ * that the desk responded to anything.
+ *
+ * A coarse pointer has no cursor to track, so scroll position drives the
+ * lean instead. Both drivers write the SAME two properties on the plane --
+ * that is the point of the design, one stylesheet and two drivers -- so if
+ * this ever stops moving, the mobile half of the page has silently become a
+ * static list while every other test still passes.
+ */
+test("scroll drives the lean where there is no pointer", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "needs a coarse pointer");
+  await page.goto("/blog");
+
+  const tiltX = () =>
+    page
+      .locator(".post-desk-plane")
+      .evaluate((el) => getComputedStyle(el).getPropertyValue("--tilt-x").trim());
+
+  // The resting lean depends on where the desk already sits, so it is set
+  // once at mount rather than waiting for a first scroll event.
+  await expect.poll(tiltX).not.toBe("0deg");
+  const atLoad = await tiltX();
+
+  await expect
+    .poll(async () => {
+      await page.evaluate(() => window.scrollBy(0, 260));
+      return tiltX();
+    })
+    .not.toBe(atLoad);
+});
+
+/**
  * Regression, caught by reading this file rather than by a failure: the first
  * version of the escape hatch flattened the sheets as well as the plane.
  * settle() runs before every geometry read in layout.spec.ts, so that would

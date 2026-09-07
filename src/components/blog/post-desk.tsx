@@ -13,8 +13,12 @@ import { useEffect, useRef, type ReactNode } from "react";
  * screen for the same angle. That is the whole mechanism, and it is what the
  * inherits:true on the tilt pair was registered for.
  *
- * Two drivers, one stylesheet: a fine pointer tracks the cursor, a coarse one
- * tracks scroll position. Both write the same two properties.
+ * It takes `children`, NOT `posts`, and that is load-bearing. This is a
+ * client component, and a Server Component passed through it as children
+ * stays on the server. Change the prop to `posts` and render PostSheet in
+ * here, and PostSheet, next/link and PostDate all cross into the client
+ * bundle for no behavioural gain -- on the one page whose design goal was to
+ * ship almost no JS.
  *
  * prefers-reduced-motion is deliberately NOT checked here. The blog is a
  * playground and that call was made explicitly; see the matching note in
@@ -44,68 +48,76 @@ export function PostDesk({ children }: { children: ReactNode }) {
     const plane = planeRef.current;
     if (!desk || !plane) return;
 
-    const motionOff = () =>
-      document.documentElement.getAttribute("data-motion") === "off";
-
     let frame = 0;
     const set = (x: number, y: number) => {
       plane.style.setProperty("--tilt-x", `${x.toFixed(2)}deg`);
       plane.style.setProperty("--tilt-y", `${y.toFixed(2)}deg`);
     };
-    const schedule = (fn: () => void) => {
+
+    /** rAF-coalesced, and the single place data-motion is honoured. */
+    const schedule = (derive: (event: Event) => void, event: Event) => {
       if (frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
-        if (motionOff()) {
+        if (document.documentElement.getAttribute("data-motion") === "off") {
           set(0, 0);
           return;
         }
-        fn();
+        derive(event);
       });
     };
 
-    const fine = window.matchMedia("(pointer: fine)").matches;
+    /* The two drivers differ ONLY in how they turn geometry into a lean, and
+       they write the same two properties. Keeping them as data means one
+       subscribe and one teardown instead of a branch that returns its own
+       cleanup and leaves the effect with two exit paths. */
+    const fromPointer = (event: Event) => {
+      const { clientX, clientY } = event as PointerEvent;
+      const r = desk.getBoundingClientRect();
+      const px = clamp((clientX - (r.left + r.width / 2)) / (r.width / 2));
+      const py = clamp((clientY - (r.top + r.height / 2)) / (r.height / 2));
+      // Cursor low tips the near edge toward the reader.
+      set(-py * MAX_TILT_DEG, px * MAX_TILT_DEG);
+    };
 
-    if (fine) {
-      const onMove = (e: PointerEvent) =>
-        schedule(() => {
-          const r = desk.getBoundingClientRect();
-          const px = clamp((e.clientX - (r.left + r.width / 2)) / (r.width / 2));
-          const py = clamp((e.clientY - (r.top + r.height / 2)) / (r.height / 2));
-          // Cursor low tips the near edge toward the reader.
-          set(-py * MAX_TILT_DEG, px * MAX_TILT_DEG);
-        });
-      const onLeave = () => schedule(() => set(0, 0));
+    const fromScroll = () => {
+      const r = desk.getBoundingClientRect();
+      const middle = window.innerHeight / 2;
+      const p = clamp((r.top + r.height / 2 - middle) / middle);
+      set(-p * MAX_TILT_DEG * SCROLL_TILT_SCALE, 0);
+    };
 
-      /* On the DESK, not on window. With a window listener the pointerleave
-         reset below is dead code: leaving fires it, and the next pointermove
-         from anywhere on the page immediately re-saturates the tilt, so the
-         desk sits pinned at maximum lean while the reader is in the footer.
-         Measured before the fix: 4deg/4deg with the cursor far outside. */
-      desk.addEventListener("pointermove", onMove, { passive: true });
-      desk.addEventListener("pointerleave", onLeave);
-      return () => {
-        cancelAnimationFrame(frame);
-        desk.removeEventListener("pointermove", onMove);
-        desk.removeEventListener("pointerleave", onLeave);
-      };
-    }
+    const rest = () => set(0, 0);
 
-    // No pointer to track, but there is always scroll. The desk leans as it
-    // passes the middle of the viewport.
-    const onScroll = () =>
-      schedule(() => {
-        const r = desk.getBoundingClientRect();
-        const middle = window.innerHeight / 2;
-        const p = clamp((r.top + r.height / 2 - middle) / middle);
-        set(-p * MAX_TILT_DEG * SCROLL_TILT_SCALE, 0);
-      });
+    /* pointermove binds to the DESK, not window. With a window listener the
+       pointerleave reset is dead code: leaving fires it, and the next
+       pointer movement anywhere on the page re-saturates the tilt, so the
+       desk sits pinned at maximum lean while the reader is in the footer.
+       Measured before the fix: 4deg/4deg with the cursor far outside. */
+    const coarse = !window.matchMedia("(pointer: fine)").matches;
+    const bindings: [EventTarget, string, (event: Event) => void][] = coarse
+      ? // No pointer to track, but there is always scroll.
+        [[window, "scroll", fromScroll]]
+      : [
+          [desk, "pointermove", fromPointer],
+          [desk, "pointerleave", rest],
+        ];
 
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
+    const unbind = bindings.map(([target, type, derive]) => {
+      const handler = (event: Event) => schedule(derive, event);
+      target.addEventListener(type, handler, { passive: true });
+      return () => target.removeEventListener(type, handler);
+    });
+
+    /* The desk's resting lean depends on where it already sits in the page,
+       so the coarse driver needs one pass before any scroll happens. Through
+       schedule(), not called directly: a page loaded with data-motion
+       already off -- print, or a non-scrolling capture -- must start flat. */
+    if (coarse) schedule(fromScroll, new Event("init"));
+
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
+      for (const off of unbind) off();
     };
   }, []);
 
