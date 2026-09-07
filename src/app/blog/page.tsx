@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { publishedPosts } from "@/content/posts";
-import { PostDate } from "@/components/blog/post-date";
+import { PostDesk } from "@/components/blog/post-desk";
+import { PostSheet } from "@/components/blog/post-sheet";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -11,12 +11,14 @@ export const metadata: Metadata = {
 };
 
 /**
- * The index, and the ONLY file Phase 2 replaces.
+ * The index, as a desk with sheets of paper laid on it.
  *
- * Everything Phase 2 needs is already true here: each card is a real <a> in
- * the DOM (so it stays crawlable when the CSS 3D goes on), the data comes
- * from the same publishedPosts() the post pages use, and nothing between
- * .blog and this list carries a transform.
+ * Still a Server Component. All the geometry is computed here and handed
+ * down as custom properties; the only client code is PostDesk's single
+ * listener. Sheets stay real <a> elements, so the page is as crawlable under
+ * CSS 3D as it was as a list.
+ *
+ * No <main> here -- app/blog/layout.tsx owns the landmark.
  */
 export default function BlogIndex() {
   const posts = publishedPosts();
@@ -29,24 +31,11 @@ export default function BlogIndex() {
         and what I am building toward.
       </p>
 
-      <ul className="mt-16 flex flex-col">
-        {posts.map((p) => (
-          <li key={p.slug} className="border-t border-rule py-8">
-            <article>
-              <PostDate published={p.published} />
-              <h2 className="mt-3 text-post-h2">
-                <Link
-                  href={`/blog/${p.slug}`}
-                  className="hover:text-accent-text"
-                >
-                  {p.title}
-                </Link>
-              </h2>
-              <p className="mt-3 max-w-[62ch] text-muted">{p.excerpt}</p>
-            </article>
-          </li>
+      <PostDesk>
+        {posts.map((p, i) => (
+          <PostSheet key={p.slug} post={p} index={i} />
         ))}
-      </ul>
+      </PostDesk>
     </div>
   );
 }
