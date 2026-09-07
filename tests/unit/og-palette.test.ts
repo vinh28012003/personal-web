@@ -74,7 +74,7 @@ const ENTRIES = [
   ),
 ];
 
-describe("OG palette tracks globals.css", () => {
+describe("OG palette tracks the stylesheets", () => {
   it("should_match_the_css_variable_each_constant_mirrors", async () => {
     const props = await rootCustomProperties();
 

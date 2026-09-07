@@ -8,15 +8,27 @@
 
    Imported from globals.css rather than standing alone, because @import must
    precede other rules -- which means everything here is emitted BEFORE the
-   portfolio's. Nothing in either file depends on that order: the two token
-   sets share no property names, and every cross-cutting rule wins on
-   specificity or on cascade layer rather than on position. Verified by
-   snapshotting getComputedStyle across four routes in both themes before and
-   after the split and diffing; the values are identical.
+   portfolio's. Nothing depends on that order, for three separate reasons
+   worth spelling out, because the obvious explanation is the wrong one.
 
-   The one rule that looks order-dependent is `html:has(.blog) body`, and it
-   is not: at (0,1,2) it outranks the `bg-paper` utility at (0,1,0) wherever
-   it sits. It stays in @layer utilities for the layer, not the position.
+   The :root and .dark declarations in the two files are disjoint: --blog-*
+   here, everything else there. Nothing to resolve.
+
+   The twenty semantic names .blog rebinds -- --paper, --ink, --accent,
+   --rule and the rest -- DO collide by name, and they are not settled by
+   specificity: `:root` and `.blog` are both (0,1,0), exactly equal. They
+   never compete at all, because they match different ELEMENTS. A custom
+   property declared on the element always beats the same property inherited
+   from an ancestor, whatever the source order or the specificity.
+
+   The single genuine same-element contest is `html:has(.blog) body` against
+   the `bg-paper` utility that <body> carries. That one IS specificity:
+   (0,1,2) beats (0,1,0) wherever the rule sits. It lives in @layer utilities
+   for the layer, not for the position.
+
+   Verified rather than reasoned: getComputedStyle snapshotted across four
+   routes in both themes, twenty properties per element, before and after the
+   split. 202 records, zero differences.
    ========================================================================== */
 
 /* ==========================================================================
@@ -69,7 +81,8 @@
 
    NOT `@theme inline`. That single missing keyword is the entire point.
 
-   The block above uses `inline`, which compiles a utility to a LITERAL:
+   The portfolio's block, over in globals.css, uses `inline`, which compiles
+   a utility to a LITERAL:
    `.text-h1{font-size:clamp(2.5rem,5.4vw,4.5rem)}`. No var(), so no scope
    can rebind it. The line-height escape hatch is closed too, because
    --tw-leading is registered `inherits:false` and never reaches the element
@@ -81,7 +94,9 @@
    IS rebindable, leading included. Verified against Tailwind's own .text-sm
    in the compiled output.
 
-   Do not tidy this into the block above. blog.spec.ts asserts it.
+   Do not tidy this into the portfolio's block in globals.css, and do not add
+   the keyword here. blog.spec.ts asserts it behaviourally: it rebinds the
+   custom property and demands the rendered font-size follow.
    ========================================================================== */
 @theme {
   --font-post: var(--font-source-serif), ui-serif, Georgia, "Times New Roman",
@@ -309,7 +324,7 @@
   .post-desk-plane {
     transform-style: preserve-3d;
     transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
-    /* 140ms linear, the reasoning on .slab-3d one section up: a spatial
+    /* 140ms linear, the reasoning on .slab-3d in globals.css: a spatial
        transform has to be TRAVERSED to read as spatial. The site-wide 0ms
        rule governs state changes -- colour, fill -- not this. */
     transition: transform 140ms linear;
@@ -362,7 +377,7 @@
      the sheets too would hide rotation-induced overflow from the 320px sweep
      in layout.spec.ts, which calls settle() before it measures.
 
-     The reveal block's data-motion rule scopes to [data-reveal] and
+     The data-motion rule in globals.css scopes to [data-reveal] and
      [data-page-enter] and does not reach these classes, so the desk needs
      its own arm or every geometry measurement is taken mid-transform. */
   html[data-motion="off"] .post-desk-plane {
@@ -374,7 +389,8 @@
 /* DELIBERATE, and it will read as a bug. The blog is a playground and the
    choice to keep the desk live under reduced motion was made explicitly.
    Relaxing here means ADDING an override rather than omitting an arm: the
-   site-wide reduce block already forces transition-duration:.01ms on every
+   site-wide reduce block in globals.css already forces
+   transition-duration:.01ms on every
    element, which would leave the tilt tracking but SNAPPING -- jumpier than
    either extreme. This restores the traverse. Do not delete it as a fix. */
 @media (prefers-reduced-motion: reduce) {
@@ -385,7 +401,7 @@
 }
 
 @layer utilities {
-  /* The .inverted lesson one level up. <body> paints from :root's --paper, so
+  /* The .inverted lesson from globals.css. <body> paints from :root's --paper, so
      a descendant rebinding it leaves the document background and, more
      visibly, the overscroll gutter portfolio-coloured. .blog cannot reach up;
      :has() is the only server-rendered fix, with no JS and no flash.

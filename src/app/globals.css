@@ -43,7 +43,7 @@
   --accent-fg: var(--primitive-ink-950); /*  5.54:1 on an accent fill */
   --rule: var(--primitive-ink-950);
   /* The portfolio's one rule already clears 3:1, so strong == rule here.
-     The blog splits them: see the blog primitives. */
+     The blog splits them: see blog.css. */
   --rule-strong: var(--primitive-ink-950);
   --focus: var(--primitive-blaze-500); /*  3.42:1 — clears the 3:1 non-text gate */
   --extrude: var(--primitive-blaze-500); /* hero depth */
