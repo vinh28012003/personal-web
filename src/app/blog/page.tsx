@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { publishedPosts } from "@/content/posts";
+import { placeholderPosts } from "@/content/placeholder-posts";
 import { PostScene } from "@/components/blog/post-scene";
 import { PostCard } from "@/components/blog/post-card";
 import { PostIndex } from "@/components/blog/post-index";
@@ -29,6 +30,11 @@ export const metadata: Metadata = {
  */
 export default function BlogIndex() {
   const posts = publishedPosts();
+  /* Empty unless PLACEHOLDER_POSTS is set. They extend the SCENE only -- they
+     are never in publishedPosts(), so they cannot reach allRoutes(), the
+     sitemap, generateStaticParams or an OG image. The index below lists real
+     posts only, so the fallback stays entirely truthful. */
+  const filler = placeholderPosts();
 
   return (
     <>
@@ -40,9 +46,17 @@ export default function BlogIndex() {
         </p>
       </header>
 
-      <PostScene count={posts.length}>
+      <PostScene count={posts.length + filler.length}>
         {posts.map((p, i) => (
           <PostCard key={p.slug} post={p} index={i} />
+        ))}
+        {filler.map((p, i) => (
+          <PostCard
+            key={p.slug}
+            post={p}
+            index={posts.length + i}
+            placeholder
+          />
         ))}
       </PostScene>
 

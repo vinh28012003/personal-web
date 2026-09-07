@@ -17,13 +17,29 @@ import { PostDate } from "@/components/blog/post-date";
  * data-motion and the CSS arm removes the whole scene before it measures --
  * so blog-scene.spec.ts checks contrast at several progress values instead.
  */
-export function PostCard({ post, index }: { post: Post; index: number }) {
+export function PostCard({
+  post,
+  index,
+  placeholder = false,
+}: {
+  post: Post;
+  index: number;
+  /* Renders a badge and drops the link. A fake post that looks real is the
+     one thing this site must not ship, so the marker is loud and the card is
+     inert rather than pointing at a URL that does not exist. */
+  placeholder?: boolean;
+}) {
   return (
     <li
       className="scene-card"
       style={{ "--i": index } as CSSProperties}
     >
       <article className="scene-card-face relative p-8 md:p-10">
+        {placeholder ? (
+          <p className="mb-4 inline-flex bg-accent px-2 py-1 font-sans text-post-meta uppercase text-accent-fg">
+            Placeholder
+          </p>
+        ) : null}
         <PostDate published={post.published} />
         <h2 className="mt-3 text-post-h2">
           {/* Stretched link: the whole face is the hit area, but the
@@ -31,12 +47,16 @@ export function PostCard({ post, index }: { post: Post; index: number }) {
               would read the date and the entire excerpt as the link text.
               layout.spec.ts's touch-target check already excludes elements
               carrying after:absolute. */}
-          <Link
-            href={`/blog/${post.slug}`}
-            className="after:absolute after:inset-0 after:content-[''] hover:text-accent-text"
-          >
-            {post.title}
-          </Link>
+          {placeholder ? (
+            post.title
+          ) : (
+            <Link
+              href={`/blog/${post.slug}`}
+              className="after:absolute after:inset-0 after:content-[''] hover:text-accent-text"
+            >
+              {post.title}
+            </Link>
+          )}
         </h2>
         <p className="mt-3 text-post-small text-muted">{post.excerpt}</p>
       </article>
