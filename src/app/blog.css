@@ -200,24 +200,30 @@
     --focus-ring-offset: 3px;
     --header-h: 60px;
 
-    /* THE SCENE (Phase 2). Ordinary declarations, deliberately NOT in the
-       @theme block above: Tailwind tree-shakes an @theme variable that no
-       UTILITY references, and these are read by hand-written rules, which
-       does not count. That is exactly how --perspective-post and
-       --z-lift-post vanished while the notes called them reserved.
+    /* THE ARC. Ordinary declarations, not @theme: Tailwind tree-shakes an
+       @theme variable that no UTILITY references, and these are read by
+       hand-written rules, which does not count.
 
-       --act-deep is where the journey travels TO. Light goes from warm paper
-       out to a deep charcoal; dark shifts hue rather than lightness, because
-       #101113 has almost nowhere darker to go. Both are interpolated with
-       color-mix() in OKLCH, which is the space the rest of the palette is
-       already reasoned in. */
-    --scene-persp: 1400px;
-    --card-w: min(100% - 2.5rem, 32rem);
-    --card-travel: 900px;
-    --act-deep: #2b2a33;
-    --shadow-card: 0 1px 1px rgb(28 27 25 / 0.04),
-      0 18px 40px -16px rgb(28 27 25 / 0.28);
-    --card-rim: 0 0 #0000;
+       The scene is deep in BOTH themes, deliberately. It is a space, not a
+       page, and that removes a whole class of risk: glass panels are always
+       light-on-dark, so panel contrast is a constant rather than something
+       that has to hold at both ends of a theme AND at every rotation. */
+    --deep-0: #131419;
+    --deep-1: #1b2133;
+    --glass-fill: rgb(233 235 239 / 0.09);
+    --glass-fill-front: rgb(233 235 239 / 0.14);
+    --glass-rim: rgb(233 235 239 / 0.22);
+    --glass-ink: #f0f2f6;
+    --glass-muted: #aab0bd;
+    --glass-accent: #9dc0ee;
+
+    /* Panel width drives the radius, so the arc is responsive without a
+       breakpoint: (w/2) / tan(step/2) is the radius at which adjacent panels
+       tile edge to edge, and for a 34deg step that constant is 1.635. */
+    --panel-w: clamp(15rem, 66vw, 26rem);
+    --panel-h: clamp(13rem, 42vh, 19rem);
+    --arc-step: 34deg;
+    --arc-radius: calc(var(--panel-w) * 1.635);
 
     /* The .inverted lesson: a scope must paint itself. Nothing above it
        follows a descendant rebinding --paper. */
@@ -276,13 +282,8 @@
     font-weight: 380;
     font-variation-settings: "opsz" 17;
 
-    /* Same journey, different endpoints. A cast shadow on the oil ground is
-       nearly nothing, so the card edge comes from a rim highlight instead,
-       and the act travels by HUE rather than by lightness -- #101113 has
-       almost nowhere darker to go. */
-    --act-deep: #161d2e;
-    --shadow-card: 0 18px 40px -16px rgb(0 0 0 / 0.6);
-    --card-rim: inset 0 1px 0 0 rgb(233 235 239 / 0.06);
+    /* The arc needs no dark companion: the scene is deep in both themes,
+       so its glass tokens are already correct here. */
   }
 
   /* base sets tabular-nums on .font-mono, which is right for code and wrong
@@ -296,31 +297,28 @@
 }
 
 /* ==========================================================================
-   BLOG -- THE SCENE
+   BLOG -- THE ARC
 
-   The index is a journey, not a layout. A tall track gives the page real
-   scroll length; the scene inside it is `position: sticky`, so it holds the
-   viewport while the track scrolls past. Posts fly out of the dark, hold at
-   the front to be chosen, and leave.
+   The index as a curved wall of glass panels wrapping past both edges, seen
+   the way you would see it through a headset. Scrolling DOWN turns the arc
+   SIDEWAYS, and that cross-axis mapping is the point: vertical input moving
+   the world horizontally is what reads as looking around a space rather than
+   scrolling a document.
 
-   Sticky, not GSAP ScrollTrigger. ScrollTrigger's pin wraps the target in a
-   pin-spacer and applies position:fixed plus a transform, which would break
-   the .blog flatten invariant that blog.spec.ts asserts -- and it would drag
-   gsap into a bundle that blog/layout.tsx deliberately keeps it out of.
-   Sticky costs none of that.
+   Standard CSS 3D carousel, which fits the one-property model exactly. The
+   RAIL rotates; panels are placed once, in the round, and never touched.
+   Everything angular is derived from --scene-progress in calc().
 
-   ONE value drives everything: --scene-progress, written by one listener at
-   the scene root. Every card derives its own beat from it in calc(), so
-   there is no per-card JavaScript, no observer and no timeline plumbing.
+   Sticky, not GSAP ScrollTrigger: its pin applies position:fixed plus a
+   transform, which would break the .blog flatten invariant blog.spec.ts
+   asserts and drag gsap into a bundle that deliberately has none.
    ========================================================================== */
 @layer components {
   .scene-track {
     position: relative;
-    /* One screen per card, plus one so the first has somewhere to arrive
-       from and the last somewhere to leave to. --span is the card count,
-       set server-side: the geometry is a function of how many posts exist,
-       never a hand-kept number. */
-    height: calc((var(--span) + 1) * 100dvh);
+    /* One screen per panel, plus one to arrive and leave. --count is set
+       server-side, so publishing a post widens the arc with no code. */
+    height: calc((var(--count) + 1) * 100dvh);
   }
 
   .scene {
@@ -328,175 +326,220 @@
     top: 0;
     height: 100dvh;
     overflow: hidden;
-    perspective: var(--scene-persp);
-    perspective-origin: 50% 45%;
-
-    /* The journey goes out and comes back, so the ground colour is driven by
-       a TRIANGLE of progress -- 0 at both ends, 1 in the middle -- not by
-       progress itself. max(x, -x) is abs(); CSS has no portable abs() yet
-       and max() is supported everywhere. */
-    --journey: calc(
-      1 - max(
-        calc(1 - 2 * var(--scene-progress)),
-        calc(2 * var(--scene-progress) - 1)
-      )
-    );
-    background-color: color-mix(
-      in oklch,
-      var(--blog-paper),
-      var(--act-deep) calc(var(--journey) * 100%)
-    );
+    perspective: 1500px;
+    perspective-origin: 50% 50%;
+    background-color: var(--deep-0);
+    /* The sweep is how far the whole arc turns across the scroll: exactly
+       far enough to bring the last panel to the front. */
+    --arc-sweep: calc((var(--count) - 1) * var(--arc-step));
+    color: var(--glass-ink);
   }
 
-  /* The environment. Three planes at different rates: parallax BETWEEN
-     layers is what reads as depth, far more than the card motion does. They
-     are decorative and must never take a pointer. */
   .scene-env {
     position: absolute;
     inset: 0;
     pointer-events: none;
+    transform-style: preserve-3d;
   }
 
-  .scene-layer {
+  /* A horizon. Something for the depth cues to be measured against, and the
+     thing that stops the deep ground reading as flat black. */
+  .scene-glow {
     position: absolute;
-    /* Oversized so a translated layer never exposes an edge. */
-    inset: -30%;
-    transform: translate3d(0, calc(var(--scene-progress) * var(--rate)), 0);
-    opacity: calc(0.35 + var(--journey) * 0.65);
-  }
-
-  .scene-layer--far {
-    --rate: -8vh;
-    background-image:
-      radial-gradient(
-        58% 42% at 22% 20%,
-        color-mix(in oklch, var(--blog-accent) 26%, transparent),
-        transparent 72%
-      ),
-      radial-gradient(
-        48% 36% at 84% 74%,
-        color-mix(in oklch, var(--blog-accent) 20%, transparent),
-        transparent 72%
-      );
-  }
-
-  .scene-layer--mid {
-    --rate: -20vh;
+    inset: 0;
     background-image: radial-gradient(
-      40% 30% at 68% 28%,
-      color-mix(in oklch, var(--blog-accent) 30%, transparent),
+      120% 60% at 50% 78%,
+      var(--deep-1),
       transparent 70%
     );
   }
 
-  /* The header stays paper while the ground travels, which on the first
-     render was a hard bright band cutting across the top of the space. This
-     is light spilling from it: paper at the very top, dissolving into the
-     scene. Tied to --journey, so it only exists once there is something to
-     dissolve INTO -- at either end of the journey the ground is paper
-     already and the veil is invisible. */
-  .scene-veil {
+  /* A ground plane, laid flat under the arc. Under the scene's perspective a
+     repeating grid on a rotated plane converges toward the horizon on its
+     own -- the recession is real geometry, not a drawn gradient. */
+  .scene-floor {
     position: absolute;
-    inset: 0 0 auto 0;
-    height: 30vh;
-    background-image: linear-gradient(
-      to bottom,
-      var(--blog-paper),
-      color-mix(in oklch, var(--blog-paper) 55%, transparent) 34%,
-      transparent
-    );
-    opacity: var(--journey);
+    left: 50%;
+    top: 62%;
+    width: 340vw;
+    height: 220vh;
+    margin-left: -170vw;
+    transform: rotateX(82deg);
+    transform-origin: 50% 0%;
+    background-image:
+      repeating-linear-gradient(
+        to right,
+        var(--glass-rim) 0 1px,
+        transparent 1px 7rem
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        var(--glass-rim) 0 1px,
+        transparent 1px 7rem
+      );
+    -webkit-mask-image: linear-gradient(to bottom, #000, transparent 46%);
+    mask-image: linear-gradient(to bottom, #000, transparent 46%);
+    opacity: 0.5;
   }
 
-  .scene-layer--near {
-    --rate: -42vh;
-    background-image: radial-gradient(
-      70% 34% at 50% 108%,
-      color-mix(in oklch, var(--act-deep) 45%, transparent),
-      transparent 74%
-    );
-  }
-
-  .scene-cards {
+  .arc-rail {
+    /* A zero-size point at the centre of the circle. Panels are pushed out
+       from it by translateZ, and their negative margins centre them on it. */
     position: absolute;
-    inset: 0;
-    /* The container is scenery, never a target. Without this it steals every
-       click: inside preserve-3d a card whose translateZ is even fractionally
-       negative sits behind the list's own plane, and Chromium then hit-tests
-       the list instead. Progress rarely lands on an exact beat, so the front
-       card is typically ~0.4px behind -- invisible, and enough to make the
-       whole index unclickable. Found by elementFromPoint returning
-       UL.scene-cards directly over the link text. */
-    pointer-events: none;
-    display: grid;
-    place-items: center;
-    transform-style: preserve-3d;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
     margin: 0;
     padding: 0;
     list-style: none;
-  }
+    transform-style: preserve-3d;
+    transform: translateZ(calc(-1 * var(--arc-radius)))
+      rotateY(calc(-1 * var(--scene-progress) * var(--arc-sweep)));
 
-  .scene-card {
-    /* All cards share one grid cell, so they stack in Z rather than flowing.
-       Paint order inside preserve-3d comes from 3D position, so no z-index. */
-    grid-area: 1 / 1;
-    width: var(--card-w);
-
-    /* Signed distance from this card's beat. Negative is still ahead in the
-       dark, 0 is centred and readable, positive is gone by. The -0.5 offset
-       is what makes the first card fly IN rather than begin centred. */
-    --u: calc(var(--scene-progress) * var(--span) - var(--i) - 0.5);
-    --mag: max(var(--u), calc(-1 * var(--u)));
-
-    transform: translateZ(calc(var(--u) * var(--card-travel)))
-      translateY(calc(var(--u) * -16vh)) rotateX(calc(var(--u) * -4deg));
-
-    /* Gone by |u| = 0.42, and that number is chosen so the handoff is a
-       clean EMPTY beat rather than a crossfade. Two cards are exactly
-       equidistant at the midpoint between their beats, so something has to
-       happen there: either they overlap or the frame empties. The first
-       attempt let both sit at 0.35 and the render showed why that is not a
-       choice -- two sets of prose superimposed into mush, illegible, while
-       every measurement said the opacities were fine.
-
-       An empty frame is the better answer and it is also the truer one: the
-       midpoint is where the ground is deepest, so the reader gets a moment
-       of open space at the bottom of the journey before the next post
-       arrives out of it. */
-    opacity: clamp(0, calc((0.42 - var(--mag)) * 4.5), 1);
-
-    /* An opacity:0 element still captures a pointer, and a card that has
-       flown past the camera covers the whole viewport. Only the front card
-       is interactive; the attribute is written once per beat change, not
-       per frame. */
+    /* The container is scenery, never a target. Without this it steals every
+       click: inside preserve-3d a panel whose translateZ leaves it behind the
+       container's own plane loses hit-testing to the container, and progress
+       rarely lands on an exact beat. This cost the whole index once. */
     pointer-events: none;
   }
 
-  .scene-card[data-front] {
+  .arc-panel {
+    position: absolute;
+    width: var(--panel-w);
+    height: var(--panel-h);
+    margin-left: calc(-0.5 * var(--panel-w));
+    margin-top: calc(-0.5 * var(--panel-h));
+    transform: rotateY(calc(var(--i) * var(--arc-step)))
+      translateZ(var(--arc-radius));
+    /* Panels swung past the far side of the circle disappear on their own.
+       No opacity ramp is needed to hide them, which is what keeps every
+       visible panel at full contrast. */
+    backface-visibility: hidden;
+  }
+
+  .arc-panel[data-front] {
     pointer-events: auto;
   }
 
-  .scene-card-face {
-    background-color: var(--blog-paper);
-    border: 1px solid var(--blog-rule);
+  /* Glass. The fill is deliberately NOT very transparent: text sits on it,
+     the ground behind it moves, and the WCAG sweep cannot see this page --
+     settle() removes the whole track before a11y.spec.ts measures. The
+     glassiness comes from the blur and the rim, not from thin ink.
+     blog-scene.spec.ts checks contrast at several rotations instead. */
+  .arc-face {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: var(--glass-fill);
+    border: 1px solid var(--glass-rim);
     border-radius: var(--radius-post);
-    box-shadow: var(--shadow-card), var(--card-rim);
+    backdrop-filter: blur(10px) saturate(1.1);
+    -webkit-backdrop-filter: blur(10px) saturate(1.1);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.08),
+      0 24px 60px -30px #000;
   }
 
-  /* Every word in the scene sits on an opaque face, deliberately: the ground
-     colour travels, and text on a travelling ground would have travelling
-     contrast. The a11y sweep cannot catch that either, because settle() sets
-     data-motion and the arm below removes the scene before it measures.
-     blog-scene.spec.ts checks contrast at several progress values instead. */
+  .arc-panel[data-front] .arc-face {
+    background-color: var(--glass-fill-front);
+    border-color: color-mix(in oklch, var(--glass-accent) 55%, transparent);
+  }
+
+  /* Corner brackets: the focused panel reads as targeted rather than merely
+     nearer. Drawn with gradients so they cost no elements. */
+  .arc-panel[data-front] .arc-face::before {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border: 1px solid color-mix(in oklch, var(--glass-accent) 70%, transparent);
+    border-radius: calc(var(--radius-post) + 6px);
+    -webkit-mask-image:
+      linear-gradient(to right, #000 18%, transparent 18% 82%, #000 82%),
+      linear-gradient(to bottom, #000 22%, transparent 22% 78%, #000 78%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to right, #000 18%, transparent 18% 82%, #000 82%),
+      linear-gradient(to bottom, #000 22%, transparent 22% 78%, #000 78%);
+    mask-composite: intersect;
+    pointer-events: none;
+  }
+
+  .arc-title {
+    color: var(--glass-ink);
+  }
+
+  .arc-meta {
+    color: var(--glass-muted);
+  }
+
+  .arc-link {
+    color: var(--glass-accent);
+  }
+
+  /* Field-of-view marks and telemetry, fixed to the viewport rather than to
+     the arc: they are the glasses, not the world. */
+  .scene-hud {
+    /* Inset from the top by the header's height: the stage is sticky at
+       top:0, so it starts BEHIND the header and anything at the stage's own
+       top edge is simply covered. Found by the readout not appearing. */
+    position: absolute;
+    inset: var(--header-h) 0 0 0;
+    pointer-events: none;
+    color: var(--glass-muted);
+  }
+}
+
+@layer components {
+  /* The header is paper with dark ink, which is correct over the intro above
+     the arc and a hard white band once the deep scene is behind it. It
+     cannot be styled statically, because BOTH grounds pass under it on the
+     same page.
+
+     So it rebinds its own tokens while the arc is engaged -- the .blog
+     technique one level down. data-scene is written by the same listener
+     that writes --scene-progress, on the element it can reach; the header is
+     a sibling of <main> and outside the scene by design, so a descendant
+     selector could never have reached it.
+
+     Rebinding tokens rather than setting colours means every control inside
+     comes with it: the wordmark, the muted separator, the theme toggle
+     resolving through --ground / --on-ground, and the focus ring. */
+  html[data-scene="on"] .blog > header {
+    --paper: transparent;
+    --ink: var(--glass-ink);
+    --muted: var(--glass-muted);
+    --rule: var(--glass-rim);
+    --rule-strong: var(--glass-rim);
+    --accent-text: var(--glass-accent);
+    --ground: var(--deep-0);
+    --on-ground: var(--glass-ink);
+    --focus: var(--glass-accent);
+
+    /* Set directly, not only rebound. The header carries no text-ink class,
+       so it INHERITS colour from .blog and reads no --ink at all; rebinding
+       the token alone left the wordmark dark on a deep ground, effectively
+       invisible. The token rebinds still matter for everything inside that
+       does resolve through them: the muted separator, the rule, the theme
+       toggle's --ground / --on-ground pair, the focus ring. */
+    color: var(--glass-ink);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition:
+      background-color 200ms linear,
+      color 200ms linear,
+      border-color 200ms linear;
+  }
 }
 
 @layer utilities {
   /* One arm, two triggers, and the unification is deliberate.
 
-     Without JS a pinned scene is not merely unanimated -- it is one stuck
-     card above a screen-tall void, which reads as broken rather than as a
+     Without JS a pinned scene is not merely unanimated -- it is one frozen
+     arc above a screen-tall void, which reads as broken rather than as a
      choice. And data-motion="off" means "render the finished state", which
-     for a narrative is its destination: the quiet index below. It also keeps
+     for a journey is its destination: the quiet index below. It also keeps
      layout.spec.ts's 320px sweep measuring something real, since settle()
      sets that attribute before every geometry read. */
   html.no-js .scene-track,
@@ -504,22 +547,19 @@
     display: none;
   }
 
-  /* The footer's only link is href="/", which the header already carries, so
-     hiding it here costs no navigation. :has() rather than restructuring the
-     layout -- same technique as html:has(.blog) body below, server-rendered
-     with no flash and no route check inside a Server Component. */
+  /* The footer's only link is href="/", which the header already carries and
+     which the Portfolio panel restores inside the arc. :has() rather than
+     restructuring the layout -- same technique as html:has(.blog) body. */
   .blog:has(.scene-track) > footer {
     display: none;
   }
 }
 
-/* No prefers-reduced-motion arm, and this time that is not a relaxation that
-   costs anything. Nothing here is transitioned or animated: the scene is a
-   pure function of scroll position, so it moves exactly as much as the
-   reader moves and no more. The site-wide reduce block clamps
-   transition-duration and animation-duration, and there is nothing here for
-   it to clamp. The decision to keep the blog live under reduced motion still
-   stands; it simply needs no code. */
+/* No prefers-reduced-motion arm, and that is not a relaxation that costs
+   anything. Nothing here is transitioned or animated: the arc is a pure
+   function of scroll position, so it moves exactly as much as the reader
+   moves and no more. The site-wide reduce block clamps transition and
+   animation durations, and there is nothing here for it to clamp. */
 
 @layer utilities {
   /* The .inverted lesson from globals.css. <body> paints from :root's --paper, so

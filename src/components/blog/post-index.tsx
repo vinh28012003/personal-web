@@ -16,7 +16,7 @@ import { PostDate } from "@/components/blog/post-date";
  */
 export function PostIndex({ posts }: { posts: readonly Post[] }) {
   return (
-    <section className="mx-auto max-w-3xl px-5 py-24">
+    <section id="all-notes" className="mx-auto max-w-3xl px-5 py-24">
       <h2 className="text-post-h2">All posts</h2>
       <ul className="mt-8 flex flex-col">
         {posts.map((p) => (

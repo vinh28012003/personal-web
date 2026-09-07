@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { publishedPosts } from "@/content/posts";
 import { placeholderPosts } from "@/content/placeholder-posts";
+import { scenePanels } from "@/content/scene-panels";
 import { PostScene } from "@/components/blog/post-scene";
-import { PostCard } from "@/components/blog/post-card";
+import { Panel } from "@/components/blog/scene-panel";
 import { PostIndex } from "@/components/blog/post-index";
 
 export const metadata: Metadata = {
@@ -13,28 +14,27 @@ export const metadata: Metadata = {
 };
 
 /**
- * The index as a journey.
+ * The index as a curved wall of glass, seen through a headset.
  *
- * Three parts, in DOM order: an intro that scrolls away, the scene that
- * pins and holds while posts fly forward to be chosen, and the quiet index
- * the journey lands in.
+ * Three parts in DOM order: an intro that scrolls away, the arc that pins and
+ * turns as you scroll, and the quiet index it lands in.
  *
- * The <h1> lives HERE, outside the scene, and that is deliberate. It is the
- * page's title in every mode -- with the scene, without JS, and under the
- * data-motion escape hatch that removes the scene entirely -- so the one-h1
- * invariant blog.spec.ts asserts never depends on which path rendered.
+ * The <h1> lives HERE, outside the arc, deliberately. It is the page's title
+ * in every mode -- with the arc, without JS, and under the data-motion escape
+ * hatch that removes the arc entirely -- so the one-h1 invariant blog.spec.ts
+ * asserts never depends on which path rendered.
  *
- * Still a Server Component. The only client code is the scene's single
- * scroll listener; the cards pass through it as children and stay on the
- * server. No <main> here -- app/blog/layout.tsx owns the landmark.
+ * Still a Server Component. The only client code is the arc's single scroll
+ * listener; panels pass through it as children and stay on the server. No
+ * <main> here -- app/blog/layout.tsx owns the landmark.
  */
 export default function BlogIndex() {
   const posts = publishedPosts();
-  /* Empty unless PLACEHOLDER_POSTS is set. They extend the SCENE only -- they
-     are never in publishedPosts(), so they cannot reach allRoutes(), the
-     sitemap, generateStaticParams or an OG image. The index below lists real
-     posts only, so the fallback stays entirely truthful. */
-  const filler = placeholderPosts();
+  /* Empty unless PLACEHOLDER_POSTS is set. They extend the ARC only -- never
+     publishedPosts(), so they cannot reach allRoutes(), the sitemap,
+     generateStaticParams or an OG image, and the index below lists real posts
+     only, so the fallback stays entirely truthful. */
+  const panels = scenePanels(posts, placeholderPosts());
 
   return (
     <>
@@ -46,17 +46,12 @@ export default function BlogIndex() {
         </p>
       </header>
 
-      <PostScene count={posts.length + filler.length}>
-        {posts.map((p, i) => (
-          <PostCard key={p.slug} post={p} index={i} />
-        ))}
-        {filler.map((p, i) => (
-          <PostCard
-            key={p.slug}
-            post={p}
-            index={posts.length + i}
-            placeholder
-          />
+      <PostScene
+        count={panels.length}
+        labels={panels.map((p) => (p.kind === "post" ? p.post.title : p.title))}
+      >
+        {panels.map((panel, i) => (
+          <Panel key={panel.key} panel={panel} index={i} />
         ))}
       </PostScene>
 
