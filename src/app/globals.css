@@ -832,11 +832,15 @@
   }
 
   /* Overlap is stated once here rather than per element. Sheets overlap into
-     each other's PADDING band only: padding is 2rem and the overlap 1.5rem,
-     so the covered region is always empty. Occluded prose would just be a
-     bug. Paint order in a preserve-3d context comes from 3D position, so
-     z-index is not involved and is deliberately not set -- it would look
-     load-bearing and do nothing. */
+     each other's PADDING band only, so the covered region is always empty;
+     occluded prose would just be a bug. The two numbers are the token below
+     and the padding utility on the sheet, and blog.spec.ts asserts the
+     relationship rather than restating it -- an earlier version of this
+     comment named both and both were stale within a day.
+
+     Paint order in a preserve-3d context comes from 3D position, so z-index
+     is not involved and is deliberately not set: it would look load-bearing
+     and do nothing. */
   .post-sheet + .post-sheet {
     margin-block-start: calc(-1 * var(--sheet-overlap));
   }

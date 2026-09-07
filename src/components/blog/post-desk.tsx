@@ -28,6 +28,10 @@ import { useEffect, useRef, type ReactNode } from "react";
  * them, which is why nothing ever caught it.
  */
 const MAX_TILT_DEG = 4;
+/* Scroll is a coarser signal than a cursor -- it moves the whole desk past
+   the viewport rather than pointing at a spot on it -- so the coarse-pointer
+   driver leans less for the same normalised input. */
+const SCROLL_TILT_SCALE = 0.7;
 
 const clamp = (n: number) => Math.max(-1, Math.min(1, n));
 
@@ -73,11 +77,16 @@ export function PostDesk({ children }: { children: ReactNode }) {
         });
       const onLeave = () => schedule(() => set(0, 0));
 
-      window.addEventListener("pointermove", onMove, { passive: true });
+      /* On the DESK, not on window. With a window listener the pointerleave
+         reset below is dead code: leaving fires it, and the next pointermove
+         from anywhere on the page immediately re-saturates the tilt, so the
+         desk sits pinned at maximum lean while the reader is in the footer.
+         Measured before the fix: 4deg/4deg with the cursor far outside. */
+      desk.addEventListener("pointermove", onMove, { passive: true });
       desk.addEventListener("pointerleave", onLeave);
       return () => {
         cancelAnimationFrame(frame);
-        window.removeEventListener("pointermove", onMove);
+        desk.removeEventListener("pointermove", onMove);
         desk.removeEventListener("pointerleave", onLeave);
       };
     }
@@ -89,7 +98,7 @@ export function PostDesk({ children }: { children: ReactNode }) {
         const r = desk.getBoundingClientRect();
         const middle = window.innerHeight / 2;
         const p = clamp((r.top + r.height / 2 - middle) / middle);
-        set(-p * MAX_TILT_DEG * 0.7, 0);
+        set(-p * MAX_TILT_DEG * SCROLL_TILT_SCALE, 0);
       });
 
     onScroll();

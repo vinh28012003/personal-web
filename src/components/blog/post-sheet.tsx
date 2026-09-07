@@ -17,9 +17,12 @@ import { PostDate } from "@/components/blog/post-date";
  * would differ between the server and client render and produce a hydration
  * mismatch.
  *
- * Sheets overlap by --sheet-overlap into each other's PADDING band only. The
- * padding is 2rem and the overlap 1.5rem, so the covered region is always
- * empty. Occlusion is the depth cue; occluded prose would just be a bug.
+ * Sheets overlap by --sheet-overlap into each other's PADDING band only, so
+ * the covered region is always empty. Occlusion is the depth cue; occluded
+ * prose would just be a bug. The numbers are deliberately NOT restated here:
+ * they live in globals.css (--sheet-overlap) and the p-10 below, and
+ * blog.spec.ts asserts the overlap never exceeds the padding. An earlier
+ * version of this comment named both values and both were wrong within a day.
  */
 const DEPTH_PX = [28, 8, 20, 3, 24, 13];
 /* Under a degree. Looked at on a render: 1.4deg slants an excerpt's
@@ -37,11 +40,7 @@ export function PostSheet({ post, index }: { post: Post; index: number }) {
 
   return (
     <li
-      className={[
-        "post-sheet p-10",
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className="post-sheet p-10"
       style={
         {
           "--depth": `${DEPTH_PX[slot]}px`,

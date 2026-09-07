@@ -468,7 +468,7 @@ test("sheets overlap into padding, never over text", async ({ page }) => {
   await page.goto("/blog");
   await settle(page);
 
-  const bad = await page.evaluate(() => {
+  const result = await page.evaluate(() => {
     const offenders: string[] = [];
     const sheets = [...document.querySelectorAll<HTMLElement>(".post-sheet")];
     for (const el of sheets.slice(1)) {
@@ -481,10 +481,14 @@ test("sheets overlap into padding, never over text", async ({ page }) => {
           `overlap ${overlap}px exceeds the ${Math.min(padTop, padBottom)}px padding band`,
         );
     }
-    return offenders;
+    return { offenders, pairs: Math.max(0, sheets.length - 1) };
   });
 
-  expect(bad, bad.join("\n")).toEqual([]);
+  /* Vacuity guard: slice(1) is empty at one sheet, so without this the
+     assertion holds against nothing -- the same shape that let a test named
+     "the six facts" check five. */
+  expect(result.pairs, "no overlapping pair to check").toBeGreaterThan(0);
+  expect(result.offenders, result.offenders.join("\n")).toEqual([]);
 });
 
 /**
@@ -545,5 +549,53 @@ test.describe("JavaScript disabled", () => {
       .locator(".post-desk-plane")
       .evaluate((el) => getComputedStyle(el).transform);
     expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(plane);
+  });
+});
+
+test.describe("prefers-reduced-motion", () => {
+  /**
+   * Two claims at once, and they pull in opposite directions.
+   *
+   * The blog deliberately keeps the desk live under reduced motion -- it is
+   * the playground and that was an explicit call. Because the site-wide
+   * reduce block already forces transition-duration:.01ms on EVERY element,
+   * honouring that choice meant ADDING an override, not omitting a guard.
+   * Delete it and the tilt still tracks but snaps, which is jumpier than
+   * either extreme.
+   *
+   * data-motion="off" must still win over that override, or the harness
+   * cannot flatten the desk on a machine with reduced motion enabled and
+   * every geometry measurement there is taken mid-transform.
+   *
+   * The precedence is a cascade-layer subtlety, not an accident: !important
+   * in unlayered styles ranks BELOW !important in any layer, so the arm in
+   * @layer utilities beats the unlayered reduce override. Verified in a
+   * browser rather than inferred, because inferred CSS behaviour is how
+   * three "reserved" tokens stayed in the notes while absent from the build.
+   */
+  test("the desk stays live under reduced motion, and the escape hatch still wins", async ({
+    page,
+  }) => {
+    // emulateMedia, not test.use({ reducedMotion }) -- matches motion.spec.ts
+    // and is what this version of @playwright/test actually types.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/blog");
+
+    const plane = page.locator(".post-desk-plane");
+    const read = () =>
+      plane.evaluate((el) => {
+        const s = getComputedStyle(el);
+        return { dur: s.transitionDuration, transform: s.transform };
+      });
+
+    // The relaxation: not clamped to the site-wide 0.01ms.
+    await expect.poll(async () => (await read()).dur).toBe("0.14s");
+
+    await page.evaluate(() =>
+      document.documentElement.setAttribute("data-motion", "off"),
+    );
+
+    await expect.poll(async () => (await read()).transform).toBe("none");
+    expect((await read()).dur).toBe("0s");
   });
 });
