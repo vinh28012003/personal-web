@@ -13,12 +13,28 @@ import { BLOG_OG, PORTFOLIO_OG, OG_TOKEN_SOURCE } from "@/lib/og-palette";
  * the next person to remember is not a mechanism.
  */
 
-/** Every :root declaration in globals.css, as name -> value. */
-async function rootCustomProperties(): Promise<Map<string, string>> {
-  const css = await readFile(
-    resolve(process.cwd(), "src/app/globals.css"),
-    "utf8",
+/**
+ * globals.css and everything it @imports, concatenated.
+ *
+ * Follows the import graph rather than naming a second file, because naming
+ * one is how this test would go stale again. It already broke once: the blog
+ * primitives moved into blog.css and the sweep below started reporting
+ * --blog-paper as undeclared, which reads as "the token was deleted" rather
+ * than "the token moved". One level deep is all the entry sheet has.
+ */
+async function readStylesheet(entry: string): Promise<string> {
+  const css = await readFile(resolve(process.cwd(), entry), "utf8");
+  const dir = entry.slice(0, entry.lastIndexOf("/"));
+  const imports = [...css.matchAll(/@import\s+"\.\/([^"]+)"/g)];
+  const parts = await Promise.all(
+    imports.map((m) => readFile(resolve(process.cwd(), `${dir}/${m[1]}`), "utf8")),
   );
+  return [css, ...parts].join("\n");
+}
+
+/** Every :root declaration across those sheets, as name -> value. */
+async function rootCustomProperties(): Promise<Map<string, string>> {
+  const css = await readStylesheet("src/app/globals.css");
 
   /*
    * Only :root blocks, and that scoping is the whole subtlety. --blog-paper is

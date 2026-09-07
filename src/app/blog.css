@@ -1,0 +1,469 @@
+/* ==========================================================================
+   THE BLOG'S DESIGN LANGUAGE
+
+   Split out of globals.css, which had reached 984 lines holding two complete
+   and independent design systems. This file owns one of them: the blog's
+   primitives, its rebindable type scale, the .blog scope, the desk, and the
+   fenced-code styling that only post prose uses.
+
+   Imported from globals.css rather than standing alone, because @import must
+   precede other rules -- which means everything here is emitted BEFORE the
+   portfolio's. Nothing in either file depends on that order: the two token
+   sets share no property names, and every cross-cutting rule wins on
+   specificity or on cascade layer rather than on position. Verified by
+   snapshotting getComputedStyle across four routes in both themes before and
+   after the split and diffing; the values are identical.
+
+   The one rule that looks order-dependent is `html:has(.blog) body`, and it
+   is not: at (0,1,2) it outranks the `bg-paper` utility at (0,1,0) wherever
+   it sits. It stays in @layer utilities for the layer, not the position.
+   ========================================================================== */
+
+/* ==========================================================================
+   BLOG PRIMITIVES
+   A second ground. The blog is a reading surface, not a poster, so it runs
+   warmer and lower-contrast than the portfolio.
+
+   Dark values are declared HERE, on .dark, above the .blog scope. That is
+   what lets .blog itself need almost no dark companion: var(--blog-paper)
+   already resolves correctly inside it.
+   ========================================================================== */
+:root {
+  --blog-paper: #fdfcf9;
+  --blog-surface: #f6f3ec; /* 1.08:1 off the ground. A whisper, not a card. */
+  --blog-ink: #1c1b19; /* 16.77:1 */
+  --blog-muted: #5f5c56; /*  6.49:1 */
+  --blog-accent: #2f4b7c; /*  8.46:1, legal on small text unlike blaze */
+  --blog-accent-fg: #ffffff; /*  8.68:1 on the accent fill */
+
+  /* The portfolio has ONE rule token and it must clear 3:1, because borders
+     there carry the structure. Here rules are decorative separators under
+     prose, so the hairline is allowed to be faint and anything that
+     identifies a control uses the strong one. Writing both now means there
+     is no temptation to darken prose rules the day a form appears. */
+  --blog-rule: #ddd9d0; /*  1.37:1, DECORATIVE only */
+  --blog-rule-strong: #8a857a; /*  3.58:1, any control boundary */
+
+  --blog-focus: #2f4b7c; /*  8.46:1, clears the 3:1 non-text gate with room */
+  --blog-muted-inv: #a8adb8;
+  --blog-accent-inv: #8fb6e8;
+}
+
+.dark {
+  --blog-paper: #101113; /* oil, not midnight: the blog is not the portfolio */
+  --blog-surface: #191b1f; /* 1.10:1 off the ground */
+  --blog-ink: #e9ebef; /* 15.83:1 */
+  --blog-muted: #a8adb8; /*  8.40:1 */
+  --blog-accent: #8fb6e8; /*  9.02:1 */
+  --blog-accent-fg: #101113; /*  9.02:1 on the accent fill */
+  --blog-rule: #33373f; /*  1.58:1, decorative */
+  --blog-rule-strong: #666b76; /*  3.54:1 */
+  --blog-focus: #8fb6e8; /*  9.02:1 */
+  --blog-muted-inv: #5f5c56;
+  --blog-accent-inv: #2f4b7c;
+}
+
+
+/* ==========================================================================
+   BLOG THEME BINDING
+
+   NOT `@theme inline`. That single missing keyword is the entire point.
+
+   The block above uses `inline`, which compiles a utility to a LITERAL:
+   `.text-h1{font-size:clamp(2.5rem,5.4vw,4.5rem)}`. No var(), so no scope
+   can rebind it. The line-height escape hatch is closed too, because
+   --tw-leading is registered `inherits:false` and never reaches the element
+   from an ancestor.
+
+   A non-inline block emits BOTH `:root{--text-post-body:...}` and
+   `.text-post-body{font-size:var(--text-post-body);
+   line-height:var(--tw-leading,var(--text-post-body--line-height))}`, which
+   IS rebindable, leading included. Verified against Tailwind's own .text-sm
+   in the compiled output.
+
+   Do not tidy this into the block above. blog.spec.ts asserts it.
+   ========================================================================== */
+@theme {
+  --font-post: var(--font-source-serif), ui-serif, Georgia, "Times New Roman",
+    serif;
+
+  --text-post-title: clamp(2rem, 4.2vw, 3rem);
+  --text-post-title--line-height: 1.08;
+  --text-post-title--letter-spacing: -0.018em;
+  --text-post-title--font-weight: 500;
+
+  --text-post-h2: clamp(1.375rem, 2.1vw, 1.75rem);
+  --text-post-h2--line-height: 1.25;
+  --text-post-h2--letter-spacing: -0.01em;
+  --text-post-h2--font-weight: 600;
+
+  --text-post-h3: 1.1875rem;
+  --text-post-h3--line-height: 1.35;
+  --text-post-h3--font-weight: 600;
+
+  --text-post-lede: clamp(1.1875rem, 1.6vw, 1.375rem);
+  --text-post-lede--line-height: 1.55;
+
+  /* 19px. 17px is the portfolio's skim floor; long-form wants the next step. */
+  --text-post-body: 1.1875rem;
+  --text-post-body--line-height: 1.72;
+
+  --text-post-small: 0.9375rem;
+  --text-post-small--line-height: 1.5;
+
+  --text-post-meta: 0.8125rem;
+  --text-post-meta--line-height: 1.4;
+  --text-post-meta--letter-spacing: 0.06em;
+
+  /* --radius-*: 0 zeroes the NAMED scale only. `.rounded` (.25rem) and
+     `.rounded-full` both escape it, so the blog's soft corner is an explicit
+     token rather than a re-derivation of a scale that is globally flat. */
+  --radius-post: 3px;
+
+  /* No speculative tokens here. Tailwind tree-shakes an @theme variable that
+     no utility references, so a token declared "for Phase 2" is deleted from
+     the build and only LOOKS reserved. --radius-post-lg, --perspective-post
+     and --z-lift-post were all declared here and all absent from the compiled
+     CSS; a Phase 2 precondition claimed the last two "exist and are unused".
+     Verified with `grep -r perspective-post .next` -> 0 hits.
+
+     @property below is the exception and the reason the contrast is worth
+     writing down: a registration is a declaration in its own right, so
+     --tilt-x, --tilt-y and --depth DO survive with no consumer. Depth tokens
+     land in this block when the component that reads them lands. */
+}
+
+/* Registered now so Phase 2 can transition them. inherits:true on the tilt
+   pair is what will let ONE pointer listener at the scene root drive every
+   card without touching them individually. */
+@property --tilt-x {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0deg;
+}
+@property --tilt-y {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0deg;
+}
+@property --depth {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+/* ==========================================================================
+   THE BLOG SCOPE
+
+   @layer components is declared and empty in the compiled output, and it is
+   correctly ordered for this: it beats @layer base element selectors, and
+   Tailwind utilities still beat it, so `font-mono` on a code block wins
+   inside .blog exactly as it should.
+   ========================================================================== */
+@layer components {
+  .blog {
+    /* Every semantic name the portfolio defines, redefined. Leaving one
+       inheriting means a portfolio primitive leaks through. */
+    --paper: var(--blog-paper);
+    --surface: var(--blog-surface);
+    --ink: var(--blog-ink);
+    --muted: var(--blog-muted);
+    --accent: var(--blog-accent);
+    --accent-text: var(--blog-accent); /* 8.46:1, legal on small text */
+    --accent-fg: var(--blog-accent-fg);
+    --rule: var(--blog-rule);
+    --rule-strong: var(--blog-rule-strong);
+    --focus: var(--blog-focus);
+    --extrude: var(--blog-rule-strong);
+    --ground: var(--blog-paper);
+    --on-ground: var(--blog-ink);
+    --muted-inverted: var(--blog-muted-inv);
+    --accent-text-inverted: var(--blog-accent-inv);
+
+    /* Structural. `* { border-color: var(--rule) }` in base needs no undo:
+       it reads the var, which is already rebound above. */
+    --slab-border-w: 1px;
+    --slab-border-w-sm: 1px;
+    --focus-ring-w: 2px;
+    --focus-ring-offset: 3px;
+    --header-h: 60px;
+
+    /* THE DESK (Phase 2). Ordinary declarations, deliberately NOT in the
+       @theme block above: Tailwind tree-shakes an @theme variable that no
+       UTILITY references, and these are read by hand-written rules, which
+       does not count. That is exactly how --perspective-post and
+       --z-lift-post vanished while the notes called them reserved.
+
+       In light the sheet is the same paper as the ground, so the cast
+       shadow is the only thing that says "above" -- which is how paper on a
+       desk actually reads: the edge you see is the shadow, not a fill
+       change. A fill change could not carry it anyway; --blog-surface is
+       1.08:1 off the ground and sheet-on-sheet would be 1:1. */
+    --perspective-desk: 1500px;
+    --sheet-overlap: 2rem;
+    --sheet-w: 30rem;
+    --shadow-sheet: 0 1px 1px rgb(28 27 25 / 0.04),
+      0 10px 24px -12px rgb(28 27 25 / 0.18);
+    --shadow-sheet-near: 0 2px 3px rgb(28 27 25 / 0.05),
+      0 22px 44px -16px rgb(28 27 25 / 0.24);
+    --sheet-rim: 0 0 #0000;
+
+    /* The .inverted lesson: a scope must paint itself. Nothing above it
+       follows a descendant rebinding --paper. */
+    /* Redefined here, not inherited from the @theme block.
+       --font-post is declared at :root as `var(--font-source-serif), ...`,
+       but --font-source-serif is set by next/font on THIS element. At :root
+       it is undefined, so the whole declaration is guaranteed-invalid and
+       inherits down as an empty string. Substitution happens where the
+       property is declared, not where it is used. Measured, not guessed:
+       getComputedStyle(.blog).getPropertyValue('--font-post') was "". */
+    --font-post: var(--font-source-serif), ui-serif, Georgia,
+      "Times New Roman", serif;
+
+    background-color: var(--blog-paper);
+    color: var(--blog-ink);
+    font-family: var(--font-post);
+    font-size: var(--text-post-body);
+    line-height: var(--text-post-body--line-height);
+  }
+
+  /* Undoes base: h1..h4 { font-family: var(--font-display); text-wrap: balance }
+     `balance` is right for a four-word display line and wrong for a nine-word
+     sentence heading, where it shortens line one and ragged-lefts the rest.
+     `pretty` fixes the orphan and leaves the measure alone. Extended to
+     h5/h6, which base misses. */
+  .blog :is(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-post);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-wrap: pretty;
+  }
+
+  /* Undoes base: a, button, summary, [role=button] { transition: none }.
+     That is the one hardcoded brutalist decision with no place here. The
+     existing prefers-reduced-motion block already forces transition-duration
+     to 0.01ms on *, so this needs no companion. */
+  .blog :is(a, button, summary, [role="button"]) {
+    transition:
+      color 140ms cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 140ms cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 140ms cubic-bezier(0.4, 0, 0.2, 1),
+      text-decoration-color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .blog ::selection {
+    background-color: var(--blog-accent);
+    color: var(--blog-accent-fg);
+  }
+
+  /* A variable serif optically gains weight on a dark ground. Dropping the
+     body a notch and opening the optical size is what makes the two themes
+     read at the same apparent colour. This is the ONLY reason the dark
+     companion exists: the tokens above already resolve, because the blog
+     primitives declare their dark values on .dark, above this scope. */
+  .dark .blog {
+    font-weight: 380;
+    font-variation-settings: "opsz" 17;
+
+    /* Same desk, lit from somewhere else. A drop shadow on the oil ground
+       is nearly invisible, so the sheet edge comes from a rim highlight
+       instead. Occlusion still reads; the light source moved. */
+    --shadow-sheet: 0 10px 24px -12px rgb(0 0 0 / 0.55);
+    --shadow-sheet-near: 0 22px 44px -16px rgb(0 0 0 / 0.65);
+    --sheet-rim: inset 0 1px 0 0 rgb(233 235 239 / 0.06);
+  }
+
+  /* base sets tabular-nums on .font-mono, which is right for code and wrong
+     for a date set in running serif. */
+  .post-prose {
+    font-variant-numeric: proportional-nums oldstyle-nums;
+  }
+  .post-prose :is(table, .font-mono) {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+}
+
+/* ==========================================================================
+   BLOG -- THE DESK
+
+   Sheets of paper laid on a desk, overlapping. Occlusion is the depth cue.
+
+   The PLANE rotates; the sheets do not. Each sheet's own translateZ then
+   turns that single rotation into parallax for free through the shared
+   perspective, because an element further forward displaces more on screen
+   for the same angle. One transform driven by one listener, no per-card
+   maths -- which is what inherits:true on --tilt-x/--tilt-y was registered
+   for. --depth is registered inherits:false, correctly: it is per-sheet.
+
+   Depth is ATMOSPHERE. It encodes nothing. See post-sheet.tsx for why the
+   values cycle instead of descending with recency.
+   ========================================================================== */
+@layer components {
+  .post-desk {
+    perspective: var(--perspective-desk);
+    /* Centred. Off-centre origin keystones a forward sheet hard enough to
+       visibly slant its text -- seen on a render at 50% 42%. */
+    perspective-origin: 50% 50%;
+  }
+
+  .post-desk-plane {
+    transform-style: preserve-3d;
+    transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+    /* 140ms linear, the reasoning on .slab-3d one section up: a spatial
+       transform has to be TRAVERSED to read as spatial. The site-wide 0ms
+       rule governs state changes -- colour, fill -- not this. */
+    transition: transform 140ms linear;
+    will-change: transform;
+  }
+
+  /* Overlap is stated once here rather than per element. Sheets overlap into
+     each other's PADDING band only, so the covered region is always empty;
+     occluded prose would just be a bug. The two numbers are the token below
+     and the padding utility on the sheet, and blog.spec.ts asserts the
+     relationship rather than restating it -- an earlier version of this
+     comment named both and both were stale within a day.
+
+     Paint order in a preserve-3d context comes from 3D position, so z-index
+     is not involved and is deliberately not set: it would look load-bearing
+     and do nothing. */
+  .post-sheet + .post-sheet {
+    margin-block-start: calc(-1 * var(--sheet-overlap));
+  }
+
+  .post-sheet {
+    position: relative;
+    width: min(100%, var(--sheet-w));
+    /* clamp() returns its MIN when MAX < MIN, so the offset collapses to 0
+       the moment the column is narrower than a sheet. That is the whole
+       mobile case, handled without a breakpoint. */
+    margin-inline-start: clamp(
+      0px,
+      var(--sheet-x, 0px),
+      calc(100% - min(100%, var(--sheet-w)))
+    );
+    transform-style: preserve-3d;
+    transform: translateZ(var(--depth)) rotate(var(--sheet-rot, 0deg));
+    background-color: var(--blog-paper);
+    border: 1px solid var(--blog-rule);
+    border-radius: var(--radius-post);
+    box-shadow: var(--shadow-sheet), var(--sheet-rim);
+    transition: box-shadow 140ms linear;
+  }
+
+  .post-sheet:hover,
+  .post-sheet:focus-within {
+    box-shadow: var(--shadow-sheet-near), var(--sheet-rim);
+  }
+}
+
+@layer utilities {
+  /* The PLANE only. A sheet's rotation and lift are not motion, they are its
+     finished state, and "off" means render the finished state. Flattening
+     the sheets too would hide rotation-induced overflow from the 320px sweep
+     in layout.spec.ts, which calls settle() before it measures.
+
+     The reveal block's data-motion rule scopes to [data-reveal] and
+     [data-page-enter] and does not reach these classes, so the desk needs
+     its own arm or every geometry measurement is taken mid-transform. */
+  html[data-motion="off"] .post-desk-plane {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* DELIBERATE, and it will read as a bug. The blog is a playground and the
+   choice to keep the desk live under reduced motion was made explicitly.
+   Relaxing here means ADDING an override rather than omitting an arm: the
+   site-wide reduce block already forces transition-duration:.01ms on every
+   element, which would leave the tilt tracking but SNAPPING -- jumpier than
+   either extreme. This restores the traverse. Do not delete it as a fix. */
+@media (prefers-reduced-motion: reduce) {
+  .post-desk-plane,
+  .post-sheet {
+    transition-duration: 140ms !important;
+  }
+}
+
+@layer utilities {
+  /* The .inverted lesson one level up. <body> paints from :root's --paper, so
+     a descendant rebinding it leaves the document background and, more
+     visibly, the overscroll gutter portfolio-coloured. .blog cannot reach up;
+     :has() is the only server-rendered fix, with no JS and no flash.
+
+     Must be in `utilities`, not `base`: <body> carries the `bg-paper
+     text-ink` utility classes, which live in this layer and would win. */
+  html:has(.blog) body {
+    background-color: var(--blog-paper);
+    color: var(--blog-ink);
+  }
+}
+
+/* ==========================================================================
+   FENCED CODE
+
+   rehype-pretty-code generates this markup AFTER the MDX component map runs,
+   so it cannot be styled from mdx-components.tsx. Shape verified in the built
+   HTML, not guessed:
+
+     <figure data-rehype-pretty-code-figure>            <-- fenced block
+       <pre tabindex="0" ...><code style="display:grid">
+
+     <span data-rehype-pretty-code-figure>              <-- INLINE code
+       <code ...>
+
+   Both carry the SAME attribute, which is the trap: an unqualified
+   [data-rehype-pretty-code-figure] selector puts display:grid on inline code
+   and breaks every sentence containing it into three blocks. Every rule below
+   is therefore anchored to `figure`.
+
+   Original shape, for reference:
+
+     <figure data-rehype-pretty-code-figure>
+       <pre tabindex="0" data-language="bash" data-theme="light dark">
+         <code data-language data-theme style="display:grid">
+           <span style="--shiki-light:#...;--shiki-dark:#...">
+
+   Two things it already does for free: tabindex="0" on the <pre>, which is
+   what makes an overflowing block scrollable by keyboard, and both themes
+   emitted at once as custom properties so the class-based dark mode can pick
+   without a second render.
+   ========================================================================== */
+@layer components {
+  .post-prose figure[data-rehype-pretty-code-figure] pre {
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-post);
+    background-color: var(--surface);
+    padding: 1rem 0;
+    font-size: var(--text-post-small);
+    line-height: 1.6;
+  }
+
+  /* keepBackground:false is set in next.config.ts, so the <pre> background is
+     --surface and not the Shiki theme's. A theme background would be the one
+     colour on the page that is not in the palette. */
+  .post-prose figure[data-rehype-pretty-code-figure] code {
+    display: grid;
+    background-color: transparent;
+    border: 0;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  .post-prose figure[data-rehype-pretty-code-figure] code [data-line] {
+    padding: 0 1rem;
+  }
+
+  .post-prose figure[data-rehype-pretty-code-figure] span {
+    color: var(--shiki-light);
+  }
+  .dark .post-prose figure[data-rehype-pretty-code-figure] span {
+    color: var(--shiki-dark);
+  }
+
+  /* The inline-code mapping in mdx-components.tsx adds a border and a tint.
+     Neither belongs on the tokens inside a fenced block. */
+  .post-prose figure[data-rehype-pretty-code-figure] :is(pre, code) {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+}
