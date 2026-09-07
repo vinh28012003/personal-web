@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { projects, getProject } from "@/content/projects";
+import { PORTFOLIO_OG } from "@/lib/og-palette";
 
 export const alt = "Project write-up by Vinh Tran";
 export const size = { width: 1200, height: 630 };
@@ -25,9 +26,9 @@ export default async function ProjectOgImage({
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        background: "#fafaf7",
-        color: "#0a0a0a",
-        border: "16px solid #0a0a0a",
+        background: PORTFOLIO_OG.paper,
+        color: PORTFOLIO_OG.ink,
+        border: `16px solid ${PORTFOLIO_OG.ink}`,
         padding: "56px 64px",
       }}
     >
@@ -37,7 +38,7 @@ export default async function ProjectOgImage({
           fontSize: 24,
           letterSpacing: 4,
           fontWeight: 700,
-          color: "#5e5e58",
+          color: PORTFOLIO_OG.muted,
         }}
       >
         VINH TRAN · WRITE-UP
@@ -60,7 +61,7 @@ export default async function ProjectOgImage({
             display: "flex",
             fontSize: 30,
             lineHeight: 1.3,
-            color: "#0a0a0a",
+            color: PORTFOLIO_OG.ink,
             maxWidth: 940,
           }}
         >
@@ -74,7 +75,7 @@ export default async function ProjectOgImage({
             key={m.unit}
             style={{
               display: "flex",
-              border: "4px solid #0a0a0a",
+              border: `4px solid ${PORTFOLIO_OG.ink}`,
               padding: "10px 18px",
               fontSize: 26,
               fontWeight: 700,

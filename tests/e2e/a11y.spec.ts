@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { PAGES, settle, CONTRAST_FN } from "./helpers";
+import { ALL_PAGES, settle, CONTRAST_FN } from "./helpers";
 
-for (const path of PAGES) {
+for (const path of ALL_PAGES) {
   for (const theme of ["light", "dark"] as const) {
     test(`every text node meets WCAG AA — ${path} [${theme}]`, async ({
       page,

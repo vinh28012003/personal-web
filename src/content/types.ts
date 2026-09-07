@@ -88,3 +88,48 @@ export interface Profile {
   /** The hero statement. Hard-broken into lines, never left to wrap. */
   heroLines: readonly string[];
 }
+
+/**
+ * A closed set. A tag typo becomes a compile error rather than an orphan
+ * filter page, and the union is what a future /blog/tag/[tag] route would
+ * enumerate.
+ */
+export type PostTag =
+  | "claude-code"
+  | "data-structures"
+  | "system-design"
+  | "workflow";
+
+export interface Post {
+  slug: string;
+  title: string;
+  /**
+   * ISO 8601 calendar date, YYYY-MM-DD.
+   *
+   * The first machine-readable date on this site. Experience has startISO,
+   * but Project.period is the human string "January 2026 to February 2026"
+   * with no counterpart, which is why the sitemap has never emitted a
+   * lastModified. This one feeds four surfaces: <time datetime>, sitemap
+   * lastModified, BlogPosting.datePublished, and the index sort.
+   */
+  published: string;
+  /** Set only on a material revision. Drives BlogPosting.dateModified. */
+  updated?: string;
+  /** One or two sentences. Card copy, meta description, and BlogPosting.description. */
+  excerpt: string;
+  readonly tags: readonly PostTag[];
+  /**
+   * Excluded from the index, the sitemap, and generateStaticParams, so a
+   * draft cannot be reached at its URL in production. Still importable in
+   * dev, which is the point.
+   *
+   * ROUTING only, not build exclusion. blog/[slug] imports its body through a
+   * template literal -- `import(\`@/content/posts/${slug}.mdx\`)` -- and a
+   * bundler cannot know which slugs that will produce, so it includes every
+   * .mdx in the directory. Confirmed: draft prose is present in
+   * .next/server/chunks. No URL serves it and nothing links to it, but the
+   * text ships. Anything genuinely private belongs outside src/content/posts,
+   * not behind this flag.
+   */
+  draft?: boolean;
+}

@@ -2,11 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Archivo, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { NoJsScript } from "@/components/layout/no-js-script";
-import { PageEnter } from "@/components/ui/page-enter";
-import { SkipLink } from "@/components/layout/skip-link";
-import { SmoothAnchorScroll } from "@/components/layout/smooth-anchor-scroll";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -101,22 +96,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-dvh flex-col bg-paper text-ink">
         <ThemeProvider>
           {/*
-            Header and footer live here, not in each page, for two reasons.
-
-            Repeating them per page had already drifted — not-found.tsx was
-            missing the SkipLink entirely, so keyboard users hitting a 404
-            had no way past the nav.
-
-            And the header must sit OUTSIDE PageEnter. PageEnter carries a
-            transform during its tween, which becomes the containing block
-            for any position: sticky descendant — the header was being
-            dragged ~10px off the top on every route change.
+            Chrome lives in the route-group layouts below, not here, so
+            the portfolio and the blog can carry different shells. This
+            stays a pure document shell: fonts, theme, analytics, and the
+            boot script.
           */}
-          <SmoothAnchorScroll />
-          <SkipLink />
-          <SiteHeader />
-          <PageEnter className="flex-1">{children}</PageEnter>
-          <SiteFooter />
+          {children}
           {/* No cookies, so no consent banner required. */}
           <Analytics />
         </ThemeProvider>

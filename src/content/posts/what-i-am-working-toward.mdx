@@ -1,0 +1,78 @@
+{/*
+  DRAFT. Marked draft: true in posts.ts, so this is excluded from the index,
+  the sitemap and generateStaticParams. It will not be reachable in production
+  until that flag comes off.
+
+  The sections below marked NEEDS YOUR INPUT are the ones I could not source
+  from anything in this repo. Everything else is drawn from src/content
+  (projects, experience, profile) or the session notes, so it should be true,
+  but check it anyway.
+*/}
+
+I have spent the last year building things that are smaller than the systems
+they imitate, on purpose. A Redis server that is not Redis. A configuration
+library that does one thing. The point was never to ship a product; it was to
+find out which parts of a system I only thought I understood.
+
+This is where that leaves me, and where I am pointing next.
+
+## What I have actually built
+
+Two projects, both deliberately scoped so the hard part was unavoidable:
+
+- **Redis Lite**, a Redis server in C++ on a single-threaded epoll loop.
+  375,000 pipelined operations per second, replication, and failover in under
+  five seconds. I wrote about [what building it taught
+  me](/blog/system-design-by-building).
+- **cforge**, configuration injection into a running application in under 10
+  milliseconds, no restart. Published to npm and PyPI.
+
+And four engineering roles before that, the most recent as a Visiting Scholar
+at the Kihara Lab at Purdue, where the work was less about throughput and more
+about not breaking a pipeline other people depended on.
+
+## The method I keep coming back to
+
+Build the naive version, find its specific failure, read about *that*, rebuild.
+
+It is slower than reading first. It is the only order in which the reading
+sticks for me, because a paper about buffer management means very little until
+you have watched one slow client stall an entire event loop.
+
+{/*
+  NEEDS YOUR INPUT.
+
+  This section should say what you are aiming at and why. I have no source for
+  any of it: nothing in the repo states a target role, a timeline, what kind of
+  team or problem you want, or what motivates the direction.
+
+  Deliberately left blank rather than guessed. The site's own rule is that it
+  makes claims a reader can check, and inventing your goals would be the one
+  claim on here that nobody could.
+
+  Worth answering:
+    - What kind of systems do you want to be working on in two years?
+    - What is the gap between what you can build now and that?
+    - Why this direction rather than an adjacent one?
+*/}
+
+## Where I am going
+
+## What is next, concretely
+
+The next project is **Raft inside Redis Lite**, replacing a failover path I
+currently choose by hand with one that can justify itself. Deepening something
+I already understand beats starting cold, because the failures land somewhere
+I have context for.
+
+{/*
+  NEEDS YOUR INPUT: anything beyond Raft. Other things on your list, what you
+  are studying, whether there is a timeline. I only know about Raft because it
+  is noted as a candidate in the session file.
+*/}
+
+## How to read the rest of this site
+
+Every number on the [projects](/#projects) pages is from something I built and
+measured. Where a claim is not verifiable yet, it is because the source is not
+public, and I would rather say that than round it off.

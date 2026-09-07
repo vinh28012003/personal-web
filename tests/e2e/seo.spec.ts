@@ -1,11 +1,27 @@
 import { test, expect } from "@playwright/test";
+import { allRoutes } from "../../src/lib/routes";
 
-test("sitemap lists every static route", async ({ request }) => {
-  const res = await request.get("/sitemap.xml");
-  expect(res.status()).toBe(200);
-  const xml = await res.text();
-  for (const slug of ["redis-lite", "cforge"]) expect(xml).toContain(slug);
-});
+/**
+ * Read from the same source the sitemap is built from, rather than a second
+ * hand-kept copy.
+ *
+ * routes.ts has always claimed "the sitemap and the tests that guard it read
+ * from the same source" and "the sitemap test fails if you don't". Until now
+ * that was aspirational: nothing imported allRoutes(), so the lists drifted
+ * by hand. Adding /blog to routes.ts and forgetting it here would have gone
+ * unnoticed, and folding these loops into a helper list that happened to omit
+ * /resume silently dropped it from three checks.
+ */
+const ROUTES = allRoutes().map((r) => r.path);
+
+/*
+ * "sitemap lists every static route" used to sit here. It was deleted rather
+ * than fixed: it substring-matched two hardcoded project slugs against the raw
+ * XML, so it checked neither static routes nor routes, and every claim it made
+ * is subsumed by "sitemap contains every route the site actually serves"
+ * below, which walks ROUTES and compares parsed <loc> pathnames. It was the
+ * third hand-kept copy in a file whose header commits to having none.
+ */
 
 test("robots.txt points at the sitemap", async ({ request }) => {
   const res = await request.get("/robots.txt");
@@ -13,12 +29,41 @@ test("robots.txt points at the sitemap", async ({ request }) => {
   expect(await res.text()).toMatch(/sitemap:/i);
 });
 
-test("open graph images render as PNG", async ({ request }) => {
-  for (const url of ["/opengraph-image", "/work/redis-lite/opengraph-image"]) {
-    const res = await request.get(url);
-    expect(res.status(), url).toBe(200);
-    expect(res.headers()["content-type"], url).toContain("image/png");
+/**
+ * Asserts what each page ADVERTISES, not a hardcoded path.
+ *
+ * The previous version fetched "/work/redis-lite/opengraph-image" directly.
+ * That passed while the page stopped referencing it entirely: moving
+ * opengraph-image.tsx out of its page's route segment left the route
+ * resolving but detached from the page's metadata, so every project shared
+ * with no image at all. A hardcoded URL cannot see that, because the URL is
+ * not the contract -- "the page offers an image that resolves" is.
+ */
+test("every page advertises an open graph image that resolves", async ({
+  page,
+  request,
+}) => {
+  for (const route of ROUTES) {
+    await page.goto(route);
+    const href = await page.getAttribute('meta[property="og:image"]', "content");
+    expect(href, `${route} advertises no og:image`).toBeTruthy();
+
+    // og:image is absolute against SITE_URL, which is not the port the test
+    // server runs on. Request the path so it resolves against baseURL, the
+    // same way the canonical test compares new URL(href).pathname.
+    const url = new URL(href!);
+    const res = await request.get(`${url.pathname}${url.search}`);
+    expect(res.status(), `${route} -> ${href}`).toBe(200);
+    expect(res.headers()["content-type"], `${route} -> ${href}`).toContain(
+      "image/png",
+    );
   }
+});
+
+test("the site-level open graph image renders as PNG", async ({ request }) => {
+  const res = await request.get("/opengraph-image");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain("image/png");
 });
 
 test("resume PDF is served for download", async ({ request }) => {
@@ -91,7 +136,7 @@ test("sitemap contains every route the site actually serves", async ({
   const xml = await (await request.get("/sitemap.xml")).text();
   const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 
-  const expected = ["/", "/resume", "/work/redis-lite", "/work/cforge"];
+  const expected = ROUTES;
   for (const route of expected) {
     const hit = locs.some((l) => new URL(l).pathname === route);
     expect(hit, `sitemap is missing ${route}\nhas: ${locs.join(", ")}`).toBe(
@@ -115,7 +160,7 @@ test("sitemap contains every route the site actually serves", async ({
 test("every page emits a canonical pointing at its own path", async ({
   page,
 }) => {
-  for (const route of ["/", "/resume", "/work/redis-lite", "/work/cforge"]) {
+  for (const route of ROUTES) {
     await page.goto(route);
     const href = await page.getAttribute('link[rel="canonical"]', "href");
     expect(href, `no canonical on ${route}`).toBeTruthy();
@@ -162,7 +207,7 @@ test("site icons are served and linked", async ({ page, request }) => {
 test("no em-dash or en-dash appears anywhere a visitor can see", async ({
   page,
 }) => {
-  for (const route of ["/", "/resume", "/work/redis-lite", "/work/cforge"]) {
+  for (const route of ROUTES) {
     await page.goto(route);
 
     const visible = await page.evaluate(() => document.body.innerText);
