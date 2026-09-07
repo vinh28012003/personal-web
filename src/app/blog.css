@@ -148,23 +148,20 @@
      land in this block when the component that reads them lands. */
 }
 
-/* Registered now so Phase 2 can transition them. inherits:true on the tilt
-   pair is what will let ONE pointer listener at the scene root drive every
-   card without touching them individually. */
-@property --tilt-x {
-  syntax: "<angle>";
+/* The one value the whole scene is a function of.
+
+   Registering it matters for two reasons beyond tidiness: an unregistered
+   custom property is an untyped token, so calc() cannot do arithmetic on it
+   and it cannot be interpolated. Typed as <number> it does both, which is
+   what lets every card derive its own beat from this single value in CSS
+   with no per-card JS.
+
+   inherits:true so one write at the scene root reaches every descendant --
+   the cards, the environment layers and the ground colour all read it. */
+@property --scene-progress {
+  syntax: "<number>";
   inherits: true;
-  initial-value: 0deg;
-}
-@property --tilt-y {
-  syntax: "<angle>";
-  inherits: true;
-  initial-value: 0deg;
-}
-@property --depth {
-  syntax: "<length>";
-  inherits: false;
-  initial-value: 0px;
+  initial-value: 0;
 }
 
 /* ==========================================================================
@@ -203,25 +200,24 @@
     --focus-ring-offset: 3px;
     --header-h: 60px;
 
-    /* THE DESK (Phase 2). Ordinary declarations, deliberately NOT in the
+    /* THE SCENE (Phase 2). Ordinary declarations, deliberately NOT in the
        @theme block above: Tailwind tree-shakes an @theme variable that no
        UTILITY references, and these are read by hand-written rules, which
        does not count. That is exactly how --perspective-post and
        --z-lift-post vanished while the notes called them reserved.
 
-       In light the sheet is the same paper as the ground, so the cast
-       shadow is the only thing that says "above" -- which is how paper on a
-       desk actually reads: the edge you see is the shadow, not a fill
-       change. A fill change could not carry it anyway; --blog-surface is
-       1.08:1 off the ground and sheet-on-sheet would be 1:1. */
-    --perspective-desk: 1500px;
-    --sheet-overlap: 2rem;
-    --sheet-w: 30rem;
-    --shadow-sheet: 0 1px 1px rgb(28 27 25 / 0.04),
-      0 10px 24px -12px rgb(28 27 25 / 0.18);
-    --shadow-sheet-near: 0 2px 3px rgb(28 27 25 / 0.05),
-      0 22px 44px -16px rgb(28 27 25 / 0.24);
-    --sheet-rim: 0 0 #0000;
+       --act-deep is where the journey travels TO. Light goes from warm paper
+       out to a deep charcoal; dark shifts hue rather than lightness, because
+       #101113 has almost nowhere darker to go. Both are interpolated with
+       color-mix() in OKLCH, which is the space the rest of the palette is
+       already reasoned in. */
+    --scene-persp: 1400px;
+    --card-w: min(100% - 2.5rem, 32rem);
+    --card-travel: 900px;
+    --act-deep: #2b2a33;
+    --shadow-card: 0 1px 1px rgb(28 27 25 / 0.04),
+      0 18px 40px -16px rgb(28 27 25 / 0.28);
+    --card-rim: 0 0 #0000;
 
     /* The .inverted lesson: a scope must paint itself. Nothing above it
        follows a descendant rebinding --paper. */
@@ -280,12 +276,13 @@
     font-weight: 380;
     font-variation-settings: "opsz" 17;
 
-    /* Same desk, lit from somewhere else. A drop shadow on the oil ground
-       is nearly invisible, so the sheet edge comes from a rim highlight
-       instead. Occlusion still reads; the light source moved. */
-    --shadow-sheet: 0 10px 24px -12px rgb(0 0 0 / 0.55);
-    --shadow-sheet-near: 0 22px 44px -16px rgb(0 0 0 / 0.65);
-    --sheet-rim: inset 0 1px 0 0 rgb(233 235 239 / 0.06);
+    /* Same journey, different endpoints. A cast shadow on the oil ground is
+       nearly nothing, so the card edge comes from a rim highlight instead,
+       and the act travels by HUE rather than by lightness -- #101113 has
+       almost nowhere darker to go. */
+    --act-deep: #161d2e;
+    --shadow-card: 0 18px 40px -16px rgb(0 0 0 / 0.6);
+    --card-rim: inset 0 1px 0 0 rgb(233 235 239 / 0.06);
   }
 
   /* base sets tabular-nums on .font-mono, which is right for code and wrong
@@ -299,106 +296,230 @@
 }
 
 /* ==========================================================================
-   BLOG -- THE DESK
+   BLOG -- THE SCENE
 
-   Sheets of paper laid on a desk, overlapping. Occlusion is the depth cue.
+   The index is a journey, not a layout. A tall track gives the page real
+   scroll length; the scene inside it is `position: sticky`, so it holds the
+   viewport while the track scrolls past. Posts fly out of the dark, hold at
+   the front to be chosen, and leave.
 
-   The PLANE rotates; the sheets do not. Each sheet's own translateZ then
-   turns that single rotation into parallax for free through the shared
-   perspective, because an element further forward displaces more on screen
-   for the same angle. One transform driven by one listener, no per-card
-   maths -- which is what inherits:true on --tilt-x/--tilt-y was registered
-   for. --depth is registered inherits:false, correctly: it is per-sheet.
+   Sticky, not GSAP ScrollTrigger. ScrollTrigger's pin wraps the target in a
+   pin-spacer and applies position:fixed plus a transform, which would break
+   the .blog flatten invariant that blog.spec.ts asserts -- and it would drag
+   gsap into a bundle that blog/layout.tsx deliberately keeps it out of.
+   Sticky costs none of that.
 
-   Depth is ATMOSPHERE. It encodes nothing. See post-sheet.tsx for why the
-   values cycle instead of descending with recency.
+   ONE value drives everything: --scene-progress, written by one listener at
+   the scene root. Every card derives its own beat from it in calc(), so
+   there is no per-card JavaScript, no observer and no timeline plumbing.
    ========================================================================== */
 @layer components {
-  .post-desk {
-    perspective: var(--perspective-desk);
-    /* Centred. Off-centre origin keystones a forward sheet hard enough to
-       visibly slant its text -- seen on a render at 50% 42%. */
-    perspective-origin: 50% 50%;
-  }
-
-  .post-desk-plane {
-    transform-style: preserve-3d;
-    transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
-    /* 140ms linear, the reasoning on .slab-3d in globals.css: a spatial
-       transform has to be TRAVERSED to read as spatial. The site-wide 0ms
-       rule governs state changes -- colour, fill -- not this. */
-    transition: transform 140ms linear;
-    will-change: transform;
-  }
-
-  /* Overlap is stated once here rather than per element. Sheets overlap into
-     each other's PADDING band only, so the covered region is always empty;
-     occluded prose would just be a bug. The two numbers are the token below
-     and the padding utility on the sheet, and blog.spec.ts asserts the
-     relationship rather than restating it -- an earlier version of this
-     comment named both and both were stale within a day.
-
-     Paint order in a preserve-3d context comes from 3D position, so z-index
-     is not involved and is deliberately not set: it would look load-bearing
-     and do nothing. */
-  .post-sheet + .post-sheet {
-    margin-block-start: calc(-1 * var(--sheet-overlap));
-  }
-
-  .post-sheet {
+  .scene-track {
     position: relative;
-    width: min(100%, var(--sheet-w));
-    /* clamp() returns its MIN when MAX < MIN, so the offset collapses to 0
-       the moment the column is narrower than a sheet. That is the whole
-       mobile case, handled without a breakpoint. */
-    margin-inline-start: clamp(
-      0px,
-      var(--sheet-x, 0px),
-      calc(100% - min(100%, var(--sheet-w)))
+    /* One screen per card, plus one so the first has somewhere to arrive
+       from and the last somewhere to leave to. --span is the card count,
+       set server-side: the geometry is a function of how many posts exist,
+       never a hand-kept number. */
+    height: calc((var(--span) + 1) * 100dvh);
+  }
+
+  .scene {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow: hidden;
+    perspective: var(--scene-persp);
+    perspective-origin: 50% 45%;
+
+    /* The journey goes out and comes back, so the ground colour is driven by
+       a TRIANGLE of progress -- 0 at both ends, 1 in the middle -- not by
+       progress itself. max(x, -x) is abs(); CSS has no portable abs() yet
+       and max() is supported everywhere. */
+    --journey: calc(
+      1 - max(
+        calc(1 - 2 * var(--scene-progress)),
+        calc(2 * var(--scene-progress) - 1)
+      )
     );
+    background-color: color-mix(
+      in oklch,
+      var(--blog-paper),
+      var(--act-deep) calc(var(--journey) * 100%)
+    );
+  }
+
+  /* The environment. Three planes at different rates: parallax BETWEEN
+     layers is what reads as depth, far more than the card motion does. They
+     are decorative and must never take a pointer. */
+  .scene-env {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .scene-layer {
+    position: absolute;
+    /* Oversized so a translated layer never exposes an edge. */
+    inset: -30%;
+    transform: translate3d(0, calc(var(--scene-progress) * var(--rate)), 0);
+    opacity: calc(0.35 + var(--journey) * 0.65);
+  }
+
+  .scene-layer--far {
+    --rate: -8vh;
+    background-image:
+      radial-gradient(
+        58% 42% at 22% 20%,
+        color-mix(in oklch, var(--blog-accent) 26%, transparent),
+        transparent 72%
+      ),
+      radial-gradient(
+        48% 36% at 84% 74%,
+        color-mix(in oklch, var(--blog-accent) 20%, transparent),
+        transparent 72%
+      );
+  }
+
+  .scene-layer--mid {
+    --rate: -20vh;
+    background-image: radial-gradient(
+      40% 30% at 68% 28%,
+      color-mix(in oklch, var(--blog-accent) 30%, transparent),
+      transparent 70%
+    );
+  }
+
+  /* The header stays paper while the ground travels, which on the first
+     render was a hard bright band cutting across the top of the space. This
+     is light spilling from it: paper at the very top, dissolving into the
+     scene. Tied to --journey, so it only exists once there is something to
+     dissolve INTO -- at either end of the journey the ground is paper
+     already and the veil is invisible. */
+  .scene-veil {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 30vh;
+    background-image: linear-gradient(
+      to bottom,
+      var(--blog-paper),
+      color-mix(in oklch, var(--blog-paper) 55%, transparent) 34%,
+      transparent
+    );
+    opacity: var(--journey);
+  }
+
+  .scene-layer--near {
+    --rate: -42vh;
+    background-image: radial-gradient(
+      70% 34% at 50% 108%,
+      color-mix(in oklch, var(--act-deep) 45%, transparent),
+      transparent 74%
+    );
+  }
+
+  .scene-cards {
+    position: absolute;
+    inset: 0;
+    /* The container is scenery, never a target. Without this it steals every
+       click: inside preserve-3d a card whose translateZ is even fractionally
+       negative sits behind the list's own plane, and Chromium then hit-tests
+       the list instead. Progress rarely lands on an exact beat, so the front
+       card is typically ~0.4px behind -- invisible, and enough to make the
+       whole index unclickable. Found by elementFromPoint returning
+       UL.scene-cards directly over the link text. */
+    pointer-events: none;
+    display: grid;
+    place-items: center;
     transform-style: preserve-3d;
-    transform: translateZ(var(--depth)) rotate(var(--sheet-rot, 0deg));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .scene-card {
+    /* All cards share one grid cell, so they stack in Z rather than flowing.
+       Paint order inside preserve-3d comes from 3D position, so no z-index. */
+    grid-area: 1 / 1;
+    width: var(--card-w);
+
+    /* Signed distance from this card's beat. Negative is still ahead in the
+       dark, 0 is centred and readable, positive is gone by. The -0.5 offset
+       is what makes the first card fly IN rather than begin centred. */
+    --u: calc(var(--scene-progress) * var(--span) - var(--i) - 0.5);
+    --mag: max(var(--u), calc(-1 * var(--u)));
+
+    transform: translateZ(calc(var(--u) * var(--card-travel)))
+      translateY(calc(var(--u) * -16vh)) rotateX(calc(var(--u) * -4deg));
+
+    /* Gone by |u| = 0.42, and that number is chosen so the handoff is a
+       clean EMPTY beat rather than a crossfade. Two cards are exactly
+       equidistant at the midpoint between their beats, so something has to
+       happen there: either they overlap or the frame empties. The first
+       attempt let both sit at 0.35 and the render showed why that is not a
+       choice -- two sets of prose superimposed into mush, illegible, while
+       every measurement said the opacities were fine.
+
+       An empty frame is the better answer and it is also the truer one: the
+       midpoint is where the ground is deepest, so the reader gets a moment
+       of open space at the bottom of the journey before the next post
+       arrives out of it. */
+    opacity: clamp(0, calc((0.42 - var(--mag)) * 4.5), 1);
+
+    /* An opacity:0 element still captures a pointer, and a card that has
+       flown past the camera covers the whole viewport. Only the front card
+       is interactive; the attribute is written once per beat change, not
+       per frame. */
+    pointer-events: none;
+  }
+
+  .scene-card[data-front] {
+    pointer-events: auto;
+  }
+
+  .scene-card-face {
     background-color: var(--blog-paper);
     border: 1px solid var(--blog-rule);
     border-radius: var(--radius-post);
-    box-shadow: var(--shadow-sheet), var(--sheet-rim);
-    transition: box-shadow 140ms linear;
+    box-shadow: var(--shadow-card), var(--card-rim);
   }
 
-  .post-sheet:hover,
-  .post-sheet:focus-within {
-    box-shadow: var(--shadow-sheet-near), var(--sheet-rim);
-  }
+  /* Every word in the scene sits on an opaque face, deliberately: the ground
+     colour travels, and text on a travelling ground would have travelling
+     contrast. The a11y sweep cannot catch that either, because settle() sets
+     data-motion and the arm below removes the scene before it measures.
+     blog-scene.spec.ts checks contrast at several progress values instead. */
 }
 
 @layer utilities {
-  /* The PLANE only. A sheet's rotation and lift are not motion, they are its
-     finished state, and "off" means render the finished state. Flattening
-     the sheets too would hide rotation-induced overflow from the 320px sweep
-     in layout.spec.ts, which calls settle() before it measures.
+  /* One arm, two triggers, and the unification is deliberate.
 
-     The data-motion rule in globals.css scopes to [data-reveal] and
-     [data-page-enter] and does not reach these classes, so the desk needs
-     its own arm or every geometry measurement is taken mid-transform. */
-  html[data-motion="off"] .post-desk-plane {
-    transform: none !important;
-    transition: none !important;
+     Without JS a pinned scene is not merely unanimated -- it is one stuck
+     card above a screen-tall void, which reads as broken rather than as a
+     choice. And data-motion="off" means "render the finished state", which
+     for a narrative is its destination: the quiet index below. It also keeps
+     layout.spec.ts's 320px sweep measuring something real, since settle()
+     sets that attribute before every geometry read. */
+  html.no-js .scene-track,
+  html[data-motion="off"] .scene-track {
+    display: none;
+  }
+
+  /* The footer's only link is href="/", which the header already carries, so
+     hiding it here costs no navigation. :has() rather than restructuring the
+     layout -- same technique as html:has(.blog) body below, server-rendered
+     with no flash and no route check inside a Server Component. */
+  .blog:has(.scene-track) > footer {
+    display: none;
   }
 }
 
-/* DELIBERATE, and it will read as a bug. The blog is a playground and the
-   choice to keep the desk live under reduced motion was made explicitly.
-   Relaxing here means ADDING an override rather than omitting an arm: the
-   site-wide reduce block in globals.css already forces
-   transition-duration:.01ms on every
-   element, which would leave the tilt tracking but SNAPPING -- jumpier than
-   either extreme. This restores the traverse. Do not delete it as a fix. */
-@media (prefers-reduced-motion: reduce) {
-  .post-desk-plane,
-  .post-sheet {
-    transition-duration: 140ms !important;
-  }
-}
+/* No prefers-reduced-motion arm, and this time that is not a relaxation that
+   costs anything. Nothing here is transitioned or animated: the scene is a
+   pure function of scroll position, so it moves exactly as much as the
+   reader moves and no more. The site-wide reduce block clamps
+   transition-duration and animation-duration, and there is nothing here for
+   it to clamp. The decision to keep the blog live under reduced motion still
+   stands; it simply needs no code. */
 
 @layer utilities {
   /* The .inverted lesson from globals.css. <body> paints from :root's --paper, so

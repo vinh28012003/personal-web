@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { publishedPosts } from "@/content/posts";
-import { PostDesk } from "@/components/blog/post-desk";
-import { PostSheet } from "@/components/blog/post-sheet";
+import { PostScene } from "@/components/blog/post-scene";
+import { PostCard } from "@/components/blog/post-card";
+import { PostIndex } from "@/components/blog/post-index";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -11,31 +12,41 @@ export const metadata: Metadata = {
 };
 
 /**
- * The index, as a desk with sheets of paper laid on it.
+ * The index as a journey.
  *
- * Still a Server Component. All the geometry is computed here and handed
- * down as custom properties; the only client code is PostDesk's single
- * listener. Sheets stay real <a> elements, so the page is as crawlable under
- * CSS 3D as it was as a list.
+ * Three parts, in DOM order: an intro that scrolls away, the scene that
+ * pins and holds while posts fly forward to be chosen, and the quiet index
+ * the journey lands in.
  *
- * No <main> here -- app/blog/layout.tsx owns the landmark.
+ * The <h1> lives HERE, outside the scene, and that is deliberate. It is the
+ * page's title in every mode -- with the scene, without JS, and under the
+ * data-motion escape hatch that removes the scene entirely -- so the one-h1
+ * invariant blog.spec.ts asserts never depends on which path rendered.
+ *
+ * Still a Server Component. The only client code is the scene's single
+ * scroll listener; the cards pass through it as children and stay on the
+ * server. No <main> here -- app/blog/layout.tsx owns the landmark.
  */
 export default function BlogIndex() {
   const posts = publishedPosts();
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-16">
-      <h1 className="text-post-title">Blog</h1>
-      <p className="mt-5 max-w-[52ch] text-post-lede text-muted">
-        Notes on how I work. Agent workflows, system design, data structures,
-        and what I am building toward.
-      </p>
+    <>
+      <header className="mx-auto max-w-3xl px-5 pt-16 pb-10">
+        <h1 className="text-post-title">Blog</h1>
+        <p className="mt-5 max-w-[52ch] text-post-lede text-muted">
+          Notes on how I work. Agent workflows, system design, data structures,
+          and what I am building toward.
+        </p>
+      </header>
 
-      <PostDesk>
+      <PostScene count={posts.length}>
         {posts.map((p, i) => (
-          <PostSheet key={p.slug} post={p} index={i} />
+          <PostCard key={p.slug} post={p} index={i} />
         ))}
-      </PostDesk>
-    </div>
+      </PostScene>
+
+      <PostIndex posts={posts} />
+    </>
   );
 }
